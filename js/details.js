@@ -747,6 +747,12 @@ async function load() {
       '';
 
     const titleText = details.title || details.name || 'Untitled';
+    if (typeof window.analyticsTrack === 'function') {
+      window.analyticsTrack('movie_view', {
+        movie_id: Number(details.id) || Number(id) || null,
+        movie_title: titleText
+      });
+    }
     const synopsis = details.overview || 'No synopsis available.';
     const rating = typeof details.vote_average === 'number' ? details.vote_average.toFixed(1) + '/10' : 'N/A';
     const imdbId = details.imdb_id || details.external_ids?.imdb_id || '';

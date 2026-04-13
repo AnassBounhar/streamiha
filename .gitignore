@@ -3,3 +3,4 @@ skills/
 .env
 .env.*
 !.env.example
+api/.analytics.sqlite

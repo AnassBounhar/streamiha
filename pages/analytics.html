@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="../assets/favicon.ico" type="image/x-icon" />
+  <title>Analytics - Streamiha</title>
+  <link rel="stylesheet" href="../css/analytics.css" />
+</head>
+<body>
+  <div id="pin-gate" class="pin-gate">
+    <div class="pin-card">
+      <h2>Protected Analytics</h2>
+      <p>Enter PIN to continue</p>
+      <form id="pin-form" class="pin-form">
+        <input id="pin-input" class="pin-input" type="password" inputmode="numeric" autocomplete="off" maxlength="12" />
+        <button class="pin-btn" type="submit">Unlock</button>
+      </form>
+      <div id="pin-error" class="pin-error"></div>
+    </div>
+  </div>
+
+  <div id="app" class="app-locked">
+    <section class="hero">
+      <div class="topbar">
+        <a href="./index.html" class="back-fab" aria-label="Back to home">←</a>
+        <h1>Analytics</h1>
+        <button id="refresh-btn" class="refresh-btn" type="button">Refresh</button>
+      </div>
+      <p class="subtitle">Live usage snapshot (active sessions, top viewed titles, and source traffic).</p>
+    </section>
+
+    <section class="stats-grid">
+      <article class="card stat-card">
+        <div class="stat-label">Active Sessions</div>
+        <div id="active-sessions" class="stat-value">--</div>
+        <div id="active-window" class="stat-note">--</div>
+      </article>
+      <article class="card stat-card">
+        <div class="stat-label">Tracking Window</div>
+        <div id="stats-window" class="stat-value">--</div>
+        <div class="stat-note">Top movies & sources</div>
+      </article>
+      <article class="card stat-card">
+        <div class="stat-label">Last Updated</div>
+        <div id="last-updated" class="stat-value">--</div>
+        <div class="stat-note">Auto refresh every 30s</div>
+      </article>
+    </section>
+
+    <section class="tables-grid">
+      <article class="card table-card">
+        <div class="card-head">
+          <h2>Most Viewed Movies</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Movie</th>
+                <th>Views</th>
+              </tr>
+            </thead>
+            <tbody id="top-movies-body"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="card table-card">
+        <div class="card-head">
+          <h2>Usage Sources</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Source</th>
+                <th>Hits</th>
+              </tr>
+            </thead>
+            <tbody id="top-sources-body"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <div id="status" class="status"></div>
+  </div>
+
+  <script src="../js/analytics.js"></script>
+  <script src="../js/analytics-page.js"></script>
+</body>
+</html>

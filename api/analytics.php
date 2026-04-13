@@ -9,6 +9,18 @@ if ($method !== 'GET' && $method !== 'POST') {
     exit;
 }
 
+if (!extension_loaded('pdo_sqlite')) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Missing pdo_sqlite extension']);
+    exit;
+}
+
+if (!is_dir(__DIR__) || !is_writable(__DIR__)) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Analytics directory is not writable']);
+    exit;
+}
+
 try {
     $db = new PDO('sqlite:' . __DIR__ . '/.analytics.sqlite');
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -35,7 +47,7 @@ try {
     $db->exec('CREATE INDEX IF NOT EXISTS idx_sessions_last_seen ON sessions(last_seen)');
 } catch (Throwable $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'SQLite unavailable']);
+    echo json_encode(['error' => 'SQLite unavailable', 'reason' => $e->getMessage()]);
     exit;
 }
 
