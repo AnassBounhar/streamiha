@@ -1,6 +1,18 @@
+<div align="center">
+
 # Streamiha v3
 
-A fast, cinematic TMDB-powered browsing experience for movies and TV shows, with a lightweight PHP proxy, client-side caching, and hardened deployment defaults.
+### A cinematic TMDB-powered experience for movies and TV shows
+
+<p>
+  <img alt="Stack" src="https://img.shields.io/badge/Stack-HTML%20%7C%20CSS%20%7C%20JavaScript%20%7C%20PHP-0f172a?style=for-the-badge" />
+  <img alt="Architecture" src="https://img.shields.io/badge/Architecture-pages%20%2F%20js%20%2F%20css-334155?style=for-the-badge" />
+  <img alt="Security" src="https://img.shields.io/badge/Security-Hardened%20Defaults-16a34a?style=for-the-badge" />
+</p>
+
+Fast browsing, smart caching, and cleaner deployment — powered by TMDB with a lightweight PHP proxy.
+
+</div>
 
 ## Highlights
 
