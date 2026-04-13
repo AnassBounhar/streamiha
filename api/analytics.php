@@ -56,8 +56,6 @@ try {
     )');
     $db->exec('CREATE INDEX IF NOT EXISTS idx_events_created_at ON events(created_at)');
     $db->exec('CREATE INDEX IF NOT EXISTS idx_events_movie_id ON events(movie_id)');
-    $db->exec('CREATE INDEX IF NOT EXISTS idx_events_country ON events(country)');
-    $db->exec('CREATE INDEX IF NOT EXISTS idx_events_ip_address ON events(ip_address)');
     $db->exec('CREATE INDEX IF NOT EXISTS idx_sessions_last_seen ON sessions(last_seen)');
 
     $ensureColumn = function ($table, $column, $definition) use ($db) {
@@ -84,6 +82,9 @@ try {
     $ensureColumn('events', 'city', 'TEXT');
     $ensureColumn('events', 'timezone', 'TEXT');
     $ensureColumn('events', 'language', 'TEXT');
+
+    $db->exec('CREATE INDEX IF NOT EXISTS idx_events_country ON events(country)');
+    $db->exec('CREATE INDEX IF NOT EXISTS idx_events_ip_address ON events(ip_address)');
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['error' => 'SQLite unavailable', 'reason' => $e->getMessage()]);
