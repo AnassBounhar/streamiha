@@ -5,13 +5,84 @@ function q(id) {
 const PIN_HASH = 'd98fea4bf956cac6f07f05d147473fdc8e375952c9717ca32f6c3b5f7dbfed3a';
 const PIN_OK_KEY = 'streamiha_analytics_pin_ok';
 
+function sha256Sync(ascii) {
+  const mathPow = Math.pow;
+  const maxWord = mathPow(2, 32);
+  let result = '';
+  const words = [];
+  const asciiBitLength = ascii.length * 8;
+  let hash = [];
+  let k = [];
+  let primeCounter = 0;
+  const isComposite = {};
+  const rightRotate = function (value, amount) {
+    return (value >>> amount) | (value << (32 - amount));
+  };
+
+  for (let candidate = 2; primeCounter < 64; candidate += 1) {
+    if (!isComposite[candidate]) {
+      for (let i = 0; i < 313; i += candidate) {
+        isComposite[i] = candidate;
+      }
+      hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+      k[primeCounter] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+      primeCounter += 1;
+    }
+  }
+
+  ascii += '\x80';
+  while ((ascii.length % 64) - 56) {
+    ascii += '\x00';
+  }
+  for (let i = 0; i < ascii.length; i += 1) {
+    const j = ascii.charCodeAt(i);
+    if (j >> 8) {
+      return '';
+    }
+    words[i >> 2] |= j << ((3 - i) % 4) * 8;
+  }
+  words[words.length] = (asciiBitLength / maxWord) | 0;
+  words[words.length] = asciiBitLength;
+
+  for (let j = 0; j < words.length;) {
+    const w = words.slice(j, j += 16);
+    const oldHash = hash.slice(0);
+    for (let i = 0; i < 64; i += 1) {
+      const w15 = w[i - 15];
+      const w2 = w[i - 2];
+      const a = hash[0];
+      const e = hash[4];
+      const temp1 = hash[7] + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) + ((e & hash[5]) ^ ((~e) & hash[6])) + k[i] + (w[i] = i < 16 ? w[i] : (w[i - 16] + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) + w[i - 7] + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) | 0);
+      const temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+      hash = [(temp1 + temp2) | 0].concat(hash);
+      hash[4] = (hash[4] + temp1) | 0;
+      hash.pop();
+    }
+    for (let i = 0; i < 8; i += 1) {
+      hash[i] = (hash[i] + oldHash[i]) | 0;
+    }
+  }
+
+  for (let i = 0; i < 8; i += 1) {
+    for (let j = 3; j + 1; j -= 1) {
+      const b = (hash[i] >> (j * 8)) & 255;
+      result += ((b < 16) ? '0' : '') + b.toString(16);
+    }
+  }
+  return result;
+}
+
 async function sha256Hex(text) {
-  const bytes = new TextEncoder().encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(function (b) {
-    return b.toString(16).padStart(2, '0');
-  }).join('');
+  const value = String(text || '');
+  if (window.crypto && window.crypto.subtle && typeof TextEncoder !== 'undefined') {
+    const bytes = new TextEncoder().encode(value);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(function (b) {
+      return b.toString(16).padStart(2, '0');
+    }).join('');
+  }
+  return sha256Sync(value);
 }
 
 function unlockApp() {
@@ -51,7 +122,7 @@ async function guardPage() {
         return;
       }
       const hash = await sha256Hex(pin);
-      if (hash !== PIN_HASH) {
+      if (!hash || hash !== PIN_HASH) {
         error.textContent = 'Invalid PIN.';
         input.value = '';
         input.focus();
