@@ -174,6 +174,128 @@ function renderRows(targetId, rows, fields) {
   });
 }
 
+function renderLocations(targetId, rows) {
+  const body = q(targetId);
+  if (!body) return;
+  body.innerHTML = '';
+  if (!Array.isArray(rows) || rows.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 3;
+    td.textContent = 'No data available yet.';
+    tr.appendChild(td);
+    body.appendChild(tr);
+    return;
+  }
+  rows.forEach(function (item, index) {
+    const tr = document.createElement('tr');
+    const tdRank = document.createElement('td');
+    tdRank.textContent = String(index + 1);
+    const tdLocation = document.createElement('td');
+    const city = String(item.city || '-');
+    const region = String(item.region || '-');
+    const country = String(item.country || 'Unknown');
+    tdLocation.textContent = city + ', ' + region + ', ' + country;
+    const tdHits = document.createElement('td');
+    tdHits.textContent = String(item.hits || 0);
+    tr.appendChild(tdRank);
+    tr.appendChild(tdLocation);
+    tr.appendChild(tdHits);
+    body.appendChild(tr);
+  });
+}
+
+function drawLineChart(canvasId, rows) {
+  const canvas = q(canvasId);
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const padding = { l: 36, r: 16, t: 16, b: 30 };
+  const innerW = w - padding.l - padding.r;
+  const innerH = h - padding.t - padding.b;
+  const maxHits = Math.max(1, ...rows.map(function (r) { return Number(r.hits || 0); }));
+
+  ctx.strokeStyle = 'rgba(148,163,184,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding.l, padding.t + innerH);
+  ctx.lineTo(padding.l + innerW, padding.t + innerH);
+  ctx.stroke();
+
+  if (!rows.length) return;
+
+  ctx.strokeStyle = '#60a5fa';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+
+  rows.forEach(function (row, i) {
+    const x = padding.l + (rows.length === 1 ? innerW / 2 : (innerW * i) / (rows.length - 1));
+    const y = padding.t + innerH - (innerH * Number(row.hits || 0)) / maxHits;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  ctx.fillStyle = '#93c5fd';
+  rows.forEach(function (row, i) {
+    const x = padding.l + (rows.length === 1 ? innerW / 2 : (innerW * i) / (rows.length - 1));
+    const y = padding.t + innerH - (innerH * Number(row.hits || 0)) / maxHits;
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+    if (i % 2 === 0 || i === rows.length - 1) {
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(String(row.label || ''), x, h - 8);
+      ctx.fillStyle = '#93c5fd';
+    }
+  });
+}
+
+function drawBarChart(canvasId, rows) {
+  const canvas = q(canvasId);
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const padding = { l: 36, r: 16, t: 16, b: 30 };
+  const innerW = w - padding.l - padding.r;
+  const innerH = h - padding.t - padding.b;
+  const maxHits = Math.max(1, ...rows.map(function (r) { return Number(r.hits || 0); }));
+
+  ctx.strokeStyle = 'rgba(148,163,184,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding.l, padding.t + innerH);
+  ctx.lineTo(padding.l + innerW, padding.t + innerH);
+  ctx.stroke();
+
+  if (!rows.length) return;
+
+  const gap = 2;
+  const barW = Math.max(2, Math.floor((innerW - gap * (rows.length - 1)) / rows.length));
+
+  rows.forEach(function (row, i) {
+    const x = padding.l + i * (barW + gap);
+    const barH = Math.round((innerH * Number(row.hits || 0)) / maxHits);
+    const y = padding.t + innerH - barH;
+    ctx.fillStyle = 'rgba(59,130,246,0.75)';
+    ctx.fillRect(x, y, barW, barH);
+    if (i % 5 === 0 || i === rows.length - 1) {
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '10px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(String(row.label || ''), x + Math.floor(barW / 2), h - 8);
+    }
+  });
+}
+
 function timeText() {
   const d = new Date();
   return d.toLocaleTimeString();
@@ -190,6 +312,10 @@ async function loadAnalytics() {
 
     renderRows('top-movies-body', data.top_movies || [], { name: 'movie_title', count: 'views' });
     renderRows('top-sources-body', data.top_sources || [], { name: 'source', count: 'hits' });
+    renderLocations('top-locations-body', data.top_locations || []);
+    renderRows('top-ips-body', data.top_ips || [], { name: 'ip_address', count: 'hits' });
+    drawLineChart('weekly-chart', data.usage_weekly || []);
+    drawBarChart('monthly-chart', data.usage_monthly || []);
 
     setStatus('Analytics loaded.');
   } catch (err) {

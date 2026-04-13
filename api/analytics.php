@@ -146,13 +146,61 @@ if ($method === 'GET') {
     $ipStmt->execute([':since' => $periodSince]);
     $topIps = $ipStmt->fetchAll(PDO::FETCH_ASSOC);
 
+    $weeklySince = $now - 6 * 24 * 60 * 60;
+    $weeklyMap = [];
+    for ($i = 6; $i >= 0; $i--) {
+        $dayTs = $now - $i * 24 * 60 * 60;
+        $dayKey = gmdate('Y-m-d', $dayTs);
+        $weeklyMap[$dayKey] = 0;
+    }
+    $weeklyStmt = $db->prepare('SELECT strftime("%Y-%m-%d", created_at, "unixepoch") AS d, COUNT(*) AS hits
+        FROM events
+        WHERE created_at >= :since
+        GROUP BY d');
+    $weeklyStmt->execute([':since' => $weeklySince]);
+    foreach ($weeklyStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $key = (string) ($row['d'] ?? '');
+        if (isset($weeklyMap[$key])) {
+            $weeklyMap[$key] = (int) ($row['hits'] ?? 0);
+        }
+    }
+    $usageWeekly = [];
+    foreach ($weeklyMap as $date => $hits) {
+        $usageWeekly[] = ['date' => $date, 'label' => gmdate('D', strtotime($date . ' UTC')), 'hits' => (int) $hits];
+    }
+
+    $monthlySince = $now - 29 * 24 * 60 * 60;
+    $monthlyMap = [];
+    for ($i = 29; $i >= 0; $i--) {
+        $dayTs = $now - $i * 24 * 60 * 60;
+        $dayKey = gmdate('Y-m-d', $dayTs);
+        $monthlyMap[$dayKey] = 0;
+    }
+    $monthlyStmt = $db->prepare('SELECT strftime("%Y-%m-%d", created_at, "unixepoch") AS d, COUNT(*) AS hits
+        FROM events
+        WHERE created_at >= :since
+        GROUP BY d');
+    $monthlyStmt->execute([':since' => $monthlySince]);
+    foreach ($monthlyStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $key = (string) ($row['d'] ?? '');
+        if (isset($monthlyMap[$key])) {
+            $monthlyMap[$key] = (int) ($row['hits'] ?? 0);
+        }
+    }
+    $usageMonthly = [];
+    foreach ($monthlyMap as $date => $hits) {
+        $usageMonthly[] = ['date' => $date, 'label' => gmdate('m/d', strtotime($date . ' UTC')), 'hits' => (int) $hits];
+    }
+
     echo json_encode([
         'active_sessions' => $activeSessions,
         'window' => ['active_seconds' => 300, 'stats_days' => 7],
         'top_movies' => $topMovies,
         'top_sources' => $topSources,
         'top_locations' => $topLocations,
-        'top_ips' => $topIps
+        'top_ips' => $topIps,
+        'usage_weekly' => $usageWeekly,
+        'usage_monthly' => $usageMonthly
     ]);
     exit;
 }

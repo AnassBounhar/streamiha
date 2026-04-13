@@ -48,6 +48,21 @@
       </article>
     </section>
 
+    <section class="charts-grid">
+      <article class="card chart-card">
+        <div class="card-head">
+          <h2>Weekly Usage (7 days)</h2>
+        </div>
+        <canvas id="weekly-chart" class="chart-canvas" width="900" height="240"></canvas>
+      </article>
+      <article class="card chart-card">
+        <div class="card-head">
+          <h2>Monthly Usage (30 days)</h2>
+        </div>
+        <canvas id="monthly-chart" class="chart-canvas" width="900" height="240"></canvas>
+      </article>
+    </section>
+
     <section class="tables-grid">
       <article class="card table-card">
         <div class="card-head">
@@ -81,6 +96,42 @@
               </tr>
             </thead>
             <tbody id="top-sources-body"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="card table-card">
+        <div class="card-head">
+          <h2>Top Locations</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Location</th>
+                <th>Hits</th>
+              </tr>
+            </thead>
+            <tbody id="top-locations-body"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="card table-card">
+        <div class="card-head">
+          <h2>Top IPs</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>IP Address</th>
+                <th>Hits</th>
+              </tr>
+            </thead>
+            <tbody id="top-ips-body"></tbody>
           </table>
         </div>
       </article>

@@ -38,38 +38,11 @@ function logoUrl(path) {
   return IMG_BASE + '/w500' + path;
 }
 
-function titleLogoUrl(path) {
-  if (!path) return '';
-  return IMG_BASE + '/w300' + path;
-}
-
 function detailsUrl(id) {
   return './details.html?type=' + encodeURIComponent(MEDIA_TYPE) + '&id=' + encodeURIComponent(id);
 }
 
-async function fetchTitleLogos(ids) {
-  const map = new Map();
-  await Promise.all(ids.map(async function (id) {
-    try {
-      const images = await fetchJson('/' + MEDIA_TYPE + '/' + id + '/images');
-      map.set(id, images.logos || []);
-    } catch (_) {
-      map.set(id, []);
-    }
-  }));
-  return map;
-}
-
-function pickLogo(logoMap, id) {
-  const arr = logoMap.get(id);
-  if (!arr || !arr.length) return '';
-  const en = arr.find(function (x) { return x.iso_639_1 === 'en' && x.file_path; });
-  if (en) return en.file_path;
-  const any = arr.find(function (x) { return x.file_path; });
-  return any ? any.file_path : '';
-}
-
-function renderCards(items, logoMap) {
+function renderCards(items) {
   const grid = document.getElementById('movies-grid');
   if (!grid) return;
 
@@ -92,19 +65,8 @@ function renderCards(items, logoMap) {
     const dim = document.createElement('div');
     dim.className = 'poster-dim';
 
-    const logoPath = pickLogo(logoMap, item.id);
-    const logo = document.createElement('img');
-    logo.className = 'logo';
-    logo.alt = title + ' logo';
-    if (logoPath) {
-      logo.src = titleLogoUrl(logoPath);
-    } else {
-      logo.style.display = 'none';
-    }
-
     wrap.appendChild(img);
     wrap.appendChild(dim);
-    wrap.appendChild(logo);
 
     const meta = document.createElement('div');
     meta.className = 'meta';
@@ -214,8 +176,7 @@ async function load() {
 
       const data = await fetchJson('/discover/' + MEDIA_TYPE, query);
       const items = (data.results || []).slice(0, 10);
-      const logoMap = await fetchTitleLogos(items.map(function (x) { return x.id; }));
-      renderCards(items, logoMap);
+      renderCards(items);
       page += 1;
       hasMore = page <= (data.total_pages || 1);
       if (btn) {
