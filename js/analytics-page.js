@@ -205,7 +205,18 @@ function renderLocations(targetId, rows) {
   });
 }
 
+function fitCanvas(canvasId) {
+  const canvas = q(canvasId);
+  if (!canvas) return;
+  const cssWidth = canvas.clientWidth || canvas.parentElement?.clientWidth || 900;
+  const cssHeight = canvas.clientHeight || 240;
+  const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+  canvas.width = Math.max(320, Math.floor(cssWidth * dpr));
+  canvas.height = Math.max(160, Math.floor(cssHeight * dpr));
+}
+
 function drawLineChart(canvasId, rows) {
+  fitCanvas(canvasId);
   const canvas = q(canvasId);
   if (!canvas || !canvas.getContext) return;
   const ctx = canvas.getContext('2d');
@@ -257,6 +268,7 @@ function drawLineChart(canvasId, rows) {
 }
 
 function drawBarChart(canvasId, rows) {
+  fitCanvas(canvasId);
   const canvas = q(canvasId);
   if (!canvas || !canvas.getContext) return;
   const ctx = canvas.getContext('2d');
@@ -301,6 +313,13 @@ function timeText() {
   return d.toLocaleTimeString();
 }
 
+function renderCharts(data) {
+  drawLineChart('weekly-chart', data.usage_weekly || []);
+  drawBarChart('monthly-chart', data.usage_monthly || []);
+}
+
+let lastStatsSnapshot = null;
+
 async function loadAnalytics() {
   try {
     setStatus('Loading analytics...');
@@ -314,8 +333,8 @@ async function loadAnalytics() {
     renderRows('top-sources-body', data.top_sources || [], { name: 'source', count: 'hits' });
     renderLocations('top-locations-body', data.top_locations || []);
     renderRows('top-ips-body', data.top_ips || [], { name: 'ip_address', count: 'hits' });
-    drawLineChart('weekly-chart', data.usage_weekly || []);
-    drawBarChart('monthly-chart', data.usage_monthly || []);
+    renderCharts(data);
+    lastStatsSnapshot = data;
 
     setStatus('Analytics loaded.');
   } catch (err) {
@@ -325,6 +344,13 @@ async function loadAnalytics() {
 
 q('refresh-btn').addEventListener('click', function () {
   loadAnalytics();
+});
+
+window.addEventListener('resize', function () {
+  if (!lastStatsSnapshot) {
+    return;
+  }
+  renderCharts(lastStatsSnapshot);
 });
 
 (async function initPage() {
