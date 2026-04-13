@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="../assets/favicon.ico" type="image/x-icon" />
+  <title>Streamiha</title>
+  <link rel="stylesheet" href="../css/details.css" />
+</head>
+<body>
+  <div id="loader"><div class="spinner"></div></div>
+  <a href="./index.html" class="back-fab" aria-label="Back to home">←</a>
+  <div class="trailer" id="trailer"></div>
+  <div id="app">
+    <h1 id="title">Loading...</h1>
+    <div class="meta" id="type"></div>
+    <div class="meta" id="overview"></div>
+
+    <div class="episode-controls" id="episode-controls">
+      <label for="season-select">Season</label>
+      <select id="season-select"></select>
+      <label for="episode-select">Episode</label>
+      <select id="episode-select"></select>
+    </div>
+
+    <div class="info-grid">
+      <section class="info-left">
+        <h2>Cast</h2>
+        <ul id="cast" class="people-list"></ul>
+
+        <h2>Director</h2>
+        <ul id="director" class="people-list"></ul>
+
+        <h2>Writers</h2>
+        <ul id="writers" class="people-list"></ul>
+      </section>
+
+      <aside class="info-right">
+        <h2>Production Companies</h2>
+        <ul id="companies" class="company-list"></ul>
+      </aside>
+    </div>
+
+    <h2>More Like This</h2>
+    <div class="similar-scroll"><table class="similar-table"><tbody><tr id="section-similar"></tr></tbody></table></div>
+  </div>
+
+  <footer class="site-footer">
+    Streamiha is a site player only and does not host or store any video content on its servers.
+    We comply with the <a href="https://www.dmca.com/" target="_blank" rel="noopener noreferrer">DMCA</a> and respect copyright holders' rights.
+  </footer>
+
+  <script src="../js/cache.js"></script>
+  <script src="../js/details.js"></script>
+</body>
+</html>

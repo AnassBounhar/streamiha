@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="../assets/favicon.ico" type="image/x-icon" />
+  <title>Streamiha</title>
+  <link rel="stylesheet" href="../css/index.css" />
+</head>
+<body>
+  <div id="loader">
+    <div class="loader-box">
+      <div class="loader-spinner"></div>
+      <div>Loading content...</div>
+    </div>
+  </div>
+
+  <div id="search-modal" class="search-modal" aria-hidden="true">
+    <div class="search-glass" role="dialog" aria-modal="true" aria-label="Search content">
+      <div class="search-head">
+        <input id="search-input" class="search-input" type="text" placeholder="Search movies and TV shows" autocomplete="off" />
+        <button id="search-close" class="search-close-btn" type="button">Close</button>
+      </div>
+      <ul id="search-results" class="search-results"></ul>
+    </div>
+  </div>
+
+  <div id="app">
+    <a class="app-brand" href="./index.html" aria-label="Streamiha home">
+      <img class="app-brand-logo" src="../assets/logo.png" alt="Streamiha logo" />
+      <span class="app-brand-name">STREAMIHA</span>
+    </a>
+    <button id="search-open" class="search-open-btn" type="button" aria-label="Open search">⌕</button>
+    <button id="star-open" class="star-open-btn" type="button" aria-label="Open starred">★</button>
+    <div id="hero" class="home-hero"></div>
+
+    <div id="continue-block">
+      <h2>Continue Playing</h2>
+      <div class="scroll"><table><tbody><tr id="section-continue"></tr></tbody></table></div>
+    </div>
+
+    <h2 class="top10-title"><span class="top10-title-main">TOP 10</span></h2>
+    <div class="scroll"><table><tbody><tr id="section-today"></tr></tbody></table></div>
+
+    <h2>Top 10 In Cinema Now</h2>
+    <div class="scroll"><table><tbody><tr id="section-cinema"></tr></tbody></table></div>
+
+    <h2>Top 10 Release This Month</h2>
+    <div class="scroll"><table><tbody><tr id="section-month"></tr></tbody></table></div>
+
+    <h2>Top 10 TV Show of All Time</h2>
+    <div class="scroll"><table><tbody><tr id="section-tv"></tr></tbody></table></div>
+
+    <h2>Top 10 Movies of All Time</h2>
+    <div class="scroll"><table><tbody><tr id="section-movies"></tr></tbody></table></div>
+
+  
+    <div class="section-head">
+      <h2>Top 10 Movies by Genre</h2>
+      <div id="genre-tabs" class="genre-tabs"></div>
+    </div>
+    <div class="scroll"><table><tbody><tr id="section-genre-movies"></tr></tbody></table></div>
+
+    <h2>Movies by Production Company</h2>
+    <div class="scroll"><table><tbody><tr id="section-companies"></tr></tbody></table></div>
+  
+    <h2>Movies by Streaming Platform</h2>
+    <div class="scroll"><table><tbody><tr id="section-platforms"></tr></tbody></table></div>
+    
+
+    <footer class="site-footer">
+      <div class="site-footer-main">
+        <img class="site-footer-logo" src="../assets/logo.png" alt="Streamiha logo" />
+        <div class="site-footer-text">
+          Streamiha is a site player only and does not host or store any video content on its servers.
+          We comply with the <a href="https://www.dmca.com/" target="_blank" rel="noopener noreferrer">DMCA</a> and respect copyright holders' rights.
+        </div>
+      </div>
+      <div class="site-footer-credit">Credit ❤️ Anass.B</div>
+    </footer>
+  </div>
+
+  <script src="../js/logo-map.js"></script>
+  <script src="../js/cache.js"></script>
+  <script src="../js/main.js"></script>
+</body>
+</html>

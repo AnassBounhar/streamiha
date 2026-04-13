@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="../assets/favicon.ico" type="image/x-icon" />
+  <title>Movies - Streamiha</title>
+  <link rel="stylesheet" href="../css/movies.css" />
+</head>
+<body>
+  <div id="loader"><div class="loader-spinner"></div></div>
+
+  <div id="app">
+    <section class="hero">
+      <div class="topbar">
+        <a href="./index.html" class="back-fab" aria-label="Back to home">←</a>
+        <h1 id="page-title">Movies</h1>
+      </div>
+      <img id="brand-logo" class="hero-logo" alt="Brand logo" />
+    </section>
+
+    <div id="movies-grid" class="grid"></div>
+
+    <div class="load-more-wrap">
+      <button id="load-more" class="load-more-btn" type="button">Load More</button>
+    </div>
+
+    <footer class="site-footer">
+      Streamiha is a site player only and does not host or store any video content on its servers.
+      We comply with the <a href="https://www.dmca.com/" target="_blank" rel="noopener noreferrer">DMCA</a> and respect copyright holders' rights.
+    </footer>
+  </div>
+
+  <script src="../js/logo-map.js"></script>
+  <script src="../js/cache.js"></script>
+  <script src="../js/movies.js"></script>
+</body>
+</html>
