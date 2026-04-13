@@ -36,6 +36,26 @@
     }
   }
 
+  function locationHints() {
+    let timezone = '';
+    let language = '';
+    try {
+      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    } catch (_) {
+    }
+    try {
+      language = navigator.language || '';
+    } catch (_) {
+    }
+    return {
+      timezone: timezone,
+      language: language,
+      country: '',
+      region: '',
+      city: ''
+    };
+  }
+
   function payload(eventType, extra) {
     const page = (window.location.pathname || '') + (window.location.search || '');
     return Object.assign({
@@ -43,7 +63,7 @@
       event_type: eventType,
       page: page,
       source: detectSource()
-    }, extra || {});
+    }, locationHints(), extra || {});
   }
 
   function send(eventType, extra) {

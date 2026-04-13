@@ -30,7 +30,13 @@ try {
         last_seen INTEGER NOT NULL,
         user_agent TEXT,
         source TEXT,
-        last_page TEXT
+        last_page TEXT,
+        ip_address TEXT,
+        country TEXT,
+        region TEXT,
+        city TEXT,
+        timezone TEXT,
+        language TEXT
     )');
     $db->exec('CREATE TABLE IF NOT EXISTS events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,11 +46,44 @@ try {
         movie_id INTEGER,
         movie_title TEXT,
         source TEXT,
+        ip_address TEXT,
+        country TEXT,
+        region TEXT,
+        city TEXT,
+        timezone TEXT,
+        language TEXT,
         created_at INTEGER NOT NULL
     )');
     $db->exec('CREATE INDEX IF NOT EXISTS idx_events_created_at ON events(created_at)');
     $db->exec('CREATE INDEX IF NOT EXISTS idx_events_movie_id ON events(movie_id)');
+    $db->exec('CREATE INDEX IF NOT EXISTS idx_events_country ON events(country)');
+    $db->exec('CREATE INDEX IF NOT EXISTS idx_events_ip_address ON events(ip_address)');
     $db->exec('CREATE INDEX IF NOT EXISTS idx_sessions_last_seen ON sessions(last_seen)');
+
+    $ensureColumn = function ($table, $column, $definition) use ($db) {
+        $stmt = $db->query('PRAGMA table_info(' . $table . ')');
+        $cols = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+        foreach ($cols as $c) {
+            if (($c['name'] ?? '') === $column) {
+                return;
+            }
+        }
+        $db->exec('ALTER TABLE ' . $table . ' ADD COLUMN ' . $column . ' ' . $definition);
+    };
+
+    $ensureColumn('sessions', 'ip_address', 'TEXT');
+    $ensureColumn('sessions', 'country', 'TEXT');
+    $ensureColumn('sessions', 'region', 'TEXT');
+    $ensureColumn('sessions', 'city', 'TEXT');
+    $ensureColumn('sessions', 'timezone', 'TEXT');
+    $ensureColumn('sessions', 'language', 'TEXT');
+
+    $ensureColumn('events', 'ip_address', 'TEXT');
+    $ensureColumn('events', 'country', 'TEXT');
+    $ensureColumn('events', 'region', 'TEXT');
+    $ensureColumn('events', 'city', 'TEXT');
+    $ensureColumn('events', 'timezone', 'TEXT');
+    $ensureColumn('events', 'language', 'TEXT');
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['error' => 'SQLite unavailable', 'reason' => $e->getMessage()]);
@@ -84,11 +123,35 @@ if ($method === 'GET') {
     $sourceStmt->execute([':since' => $periodSince]);
     $topSources = $sourceStmt->fetchAll(PDO::FETCH_ASSOC);
 
+    $locationStmt = $db->prepare('SELECT
+            COALESCE(NULLIF(country, ""), "Unknown") AS country,
+            COALESCE(NULLIF(region, ""), "-") AS region,
+            COALESCE(NULLIF(city, ""), "-") AS city,
+            COUNT(*) AS hits
+        FROM events
+        WHERE created_at >= :since
+        GROUP BY country, region, city
+        ORDER BY hits DESC
+        LIMIT 10');
+    $locationStmt->execute([':since' => $periodSince]);
+    $topLocations = $locationStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $ipStmt = $db->prepare('SELECT COALESCE(NULLIF(ip_address, ""), "unknown") AS ip_address, COUNT(*) AS hits
+        FROM events
+        WHERE created_at >= :since
+        GROUP BY ip_address
+        ORDER BY hits DESC
+        LIMIT 10');
+    $ipStmt->execute([':since' => $periodSince]);
+    $topIps = $ipStmt->fetchAll(PDO::FETCH_ASSOC);
+
     echo json_encode([
         'active_sessions' => $activeSessions,
         'window' => ['active_seconds' => 300, 'stats_days' => 7],
         'top_movies' => $topMovies,
-        'top_sources' => $topSources
+        'top_sources' => $topSources,
+        'top_locations' => $topLocations,
+        'top_ips' => $topIps
     ]);
     exit;
 }
@@ -107,6 +170,21 @@ $page = isset($data['page']) ? trim((string) $data['page']) : '';
 $source = isset($data['source']) ? trim((string) $data['source']) : '';
 $movieId = isset($data['movie_id']) ? (int) $data['movie_id'] : null;
 $movieTitle = isset($data['movie_title']) ? trim((string) $data['movie_title']) : '';
+$country = isset($data['country']) ? trim((string) $data['country']) : '';
+$region = isset($data['region']) ? trim((string) $data['region']) : '';
+$city = isset($data['city']) ? trim((string) $data['city']) : '';
+$timezone = isset($data['timezone']) ? trim((string) $data['timezone']) : '';
+$language = isset($data['language']) ? trim((string) $data['language']) : '';
+$forwarded = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? trim((string) $_SERVER['HTTP_X_FORWARDED_FOR']) : '';
+$clientIp = '';
+if ($forwarded !== '') {
+    $parts = explode(',', $forwarded);
+    $clientIp = trim((string) ($parts[0] ?? ''));
+}
+if ($clientIp === '') {
+    $clientIp = trim((string) ($_SERVER['REMOTE_ADDR'] ?? ''));
+}
+$clientIp = substr($clientIp, 0, 64);
 $userAgent = substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
 
 if (!preg_match('/^[a-zA-Z0-9_-]{8,80}$/', $sessionId)) {
@@ -123,26 +201,43 @@ if (!preg_match('/^[a-z_]{3,40}$/', $eventType)) {
 $page = substr($page, 0, 180);
 $source = substr($source, 0, 120);
 $movieTitle = substr($movieTitle, 0, 200);
+$country = substr($country, 0, 80);
+$region = substr($region, 0, 120);
+$city = substr($city, 0, 120);
+$timezone = substr($timezone, 0, 80);
+$language = substr($language, 0, 40);
 $now = time();
 
-$upsert = $db->prepare('INSERT INTO sessions (session_id, first_seen, last_seen, user_agent, source, last_page)
-    VALUES (:session_id, :first_seen, :last_seen, :user_agent, :source, :last_page)
+$upsert = $db->prepare('INSERT INTO sessions (session_id, first_seen, last_seen, user_agent, source, last_page, ip_address, country, region, city, timezone, language)
+    VALUES (:session_id, :first_seen, :last_seen, :user_agent, :source, :last_page, :ip_address, :country, :region, :city, :timezone, :language)
     ON CONFLICT(session_id) DO UPDATE SET
     last_seen = excluded.last_seen,
     user_agent = excluded.user_agent,
     source = CASE WHEN excluded.source <> "" THEN excluded.source ELSE sessions.source END,
-    last_page = excluded.last_page');
+    last_page = excluded.last_page,
+    ip_address = excluded.ip_address,
+    country = CASE WHEN excluded.country <> "" THEN excluded.country ELSE sessions.country END,
+    region = CASE WHEN excluded.region <> "" THEN excluded.region ELSE sessions.region END,
+    city = CASE WHEN excluded.city <> "" THEN excluded.city ELSE sessions.city END,
+    timezone = CASE WHEN excluded.timezone <> "" THEN excluded.timezone ELSE sessions.timezone END,
+    language = CASE WHEN excluded.language <> "" THEN excluded.language ELSE sessions.language END');
 $upsert->execute([
     ':session_id' => $sessionId,
     ':first_seen' => $now,
     ':last_seen' => $now,
     ':user_agent' => $userAgent,
     ':source' => $source,
-    ':last_page' => $page
+    ':last_page' => $page,
+    ':ip_address' => $clientIp,
+    ':country' => $country,
+    ':region' => $region,
+    ':city' => $city,
+    ':timezone' => $timezone,
+    ':language' => $language
 ]);
 
-$insertEvent = $db->prepare('INSERT INTO events (session_id, event_type, page, movie_id, movie_title, source, created_at)
-    VALUES (:session_id, :event_type, :page, :movie_id, :movie_title, :source, :created_at)');
+$insertEvent = $db->prepare('INSERT INTO events (session_id, event_type, page, movie_id, movie_title, source, ip_address, country, region, city, timezone, language, created_at)
+    VALUES (:session_id, :event_type, :page, :movie_id, :movie_title, :source, :ip_address, :country, :region, :city, :timezone, :language, :created_at)');
 $insertEvent->bindValue(':session_id', $sessionId, PDO::PARAM_STR);
 $insertEvent->bindValue(':event_type', $eventType, PDO::PARAM_STR);
 $insertEvent->bindValue(':page', $page, PDO::PARAM_STR);
@@ -153,6 +248,12 @@ if ($movieId === null || $movieId <= 0) {
 }
 $insertEvent->bindValue(':movie_title', $movieTitle, PDO::PARAM_STR);
 $insertEvent->bindValue(':source', $source, PDO::PARAM_STR);
+$insertEvent->bindValue(':ip_address', $clientIp, PDO::PARAM_STR);
+$insertEvent->bindValue(':country', $country, PDO::PARAM_STR);
+$insertEvent->bindValue(':region', $region, PDO::PARAM_STR);
+$insertEvent->bindValue(':city', $city, PDO::PARAM_STR);
+$insertEvent->bindValue(':timezone', $timezone, PDO::PARAM_STR);
+$insertEvent->bindValue(':language', $language, PDO::PARAM_STR);
 $insertEvent->bindValue(':created_at', $now, PDO::PARAM_INT);
 $insertEvent->execute();
 
