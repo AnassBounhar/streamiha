@@ -11,7 +11,7 @@ RewriteRule ^analytics/?$ /pages/analytics.html [L,NC]
 RewriteCond %{REQUEST_URI} ^/$
 RewriteRule ^$ /pages/index.html [L]
 RewriteRule ^index\.html$ /pages/index.html [L]
-RewriteRule ^(movies|tvshows|details|analytics)\.html$ /pages/$1.html [L,NC]
+RewriteRule ^(content|details|analytics)\.html$ /pages/$1.html [L,NC]
 </IfModule>
 
 <IfModule mod_headers.c>
