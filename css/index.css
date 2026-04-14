@@ -338,7 +338,8 @@
     }
 
     #section-platforms td,
-    #section-companies td {
+    #section-companies td,
+    #section-artists td {
       width: calc((80vw - 56px) / 12.4);
       min-width: calc((80vw - 56px) / 12.4);
       padding: 3px 5px;
@@ -426,6 +427,26 @@
       background: radial-gradient(circle at 30% 30%, #1e3a8a 0%, #0b1223 70%);
       padding: 6px;
       box-sizing: border-box;
+    }
+
+    #section-artists .logo-tile {
+      background: #0b1223;
+      border-color: #263449;
+    }
+
+    #section-artists .logo-tile-img {
+      object-fit: cover;
+      padding: 0;
+      background: #0b1223;
+    }
+
+    #section-artists .logo-tile::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16), inset 0 -22px 30px rgba(2, 6, 23, 0.42);
+      pointer-events: none;
     }
 
     .poster-dim {
@@ -753,6 +774,19 @@
       white-space: nowrap;
       color: #e2e8f0;
       font-weight: 600;
+      cursor: default;
+    }
+
+    .site-footer-credit-heart {
+      color: inherit;
+      text-decoration: none !important;
+      cursor: default !important;
+    }
+
+    .site-footer-credit-heart:hover {
+      color: inherit;
+      text-decoration: none !important;
+      cursor: default !important;
     }
 
     .site-footer a {
@@ -811,7 +845,8 @@
       }
 
       #section-platforms td,
-      #section-companies td {
+      #section-companies td,
+      #section-artists td {
         width: calc((90vw - 56px) / 10.4);
         min-width: calc((90vw - 56px) / 10.4);
         padding: 3px 4px;
@@ -888,10 +923,11 @@
       }
 
       #section-platforms td,
-      #section-companies td {
-        width: calc((94vw - 36px) / 6);
-        min-width: calc((94vw - 36px) / 6);
-        padding: 3px 3px;
+      #section-companies td,
+      #section-artists td {
+        width: calc((94vw - 36px) / 4.25);
+        min-width: calc((94vw - 36px) / 4.25);
+        padding: 4px 4px;
       }
 
       .poster916 {

@@ -122,20 +122,31 @@ function detailsUrl(item, fallbackType) {
 
 function browseByPlatformUrl(providerId, providerName, mediaType) {
   if (!providerId) return '';
-  const page = mediaType === 'tv' ? './tvshows.html' : './movies.html';
-  let url = page + '?mode=platform&provider=' + encodeURIComponent(providerId);
+  const resolvedType = mediaType === 'tv' ? 'tv' : mediaType === 'all' ? 'all' : 'movie';
+  let url = './content.html?mode=platform&provider=' + encodeURIComponent(providerId);
   if (providerName) {
     url += '&name=' + encodeURIComponent(providerName);
   }
+  url += '&media_type=' + encodeURIComponent(resolvedType);
   return url;
 }
 
 function browseByCompanyUrl(companyId, companyName, mediaType) {
   if (!companyId) return '';
-  const page = mediaType === 'tv' ? './tvshows.html' : './movies.html';
-  let url = page + '?mode=company&company=' + encodeURIComponent(companyId);
+  const resolvedType = mediaType === 'tv' ? 'tv' : mediaType === 'all' ? 'all' : 'movie';
+  let url = './content.html?mode=company&company=' + encodeURIComponent(companyId);
   if (companyName) {
     url += '&name=' + encodeURIComponent(companyName);
+  }
+  url += '&media_type=' + encodeURIComponent(resolvedType);
+  return url;
+}
+
+function browseByArtistUrl(artistId, artistName) {
+  if (!artistId) return '';
+  let url = './content.html?mode=artist&artist=' + encodeURIComponent(artistId) + '&media_type=all';
+  if (artistName) {
+    url += '&name=' + encodeURIComponent(artistName);
   }
   return url;
 }
@@ -148,6 +159,22 @@ function continueStreamUrl(item) {
   const season = Number(item.season_number) || 1;
   const episode = Number(item.episode_number) || 1;
   return homeVidkingUrl(type, item.id, season, episode);
+}
+
+function submitPlayerPost(url) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = './player.php';
+  form.style.display = 'none';
+
+  const input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = 'stream_url';
+  input.value = String(url || '');
+
+  form.appendChild(input);
+  document.body.appendChild(form);
+  form.submit();
 }
 
 let searchDebounce;
@@ -689,10 +716,12 @@ function attachHeroOverlay(el, logoPath, streamUrl, imdbUrl, synopsis, rating, t
   const streamBtn = document.createElement('a');
   streamBtn.className = 'overlay-play-btn';
   streamBtn.href = streamUrl;
-  streamBtn.target = '_blank';
-  streamBtn.rel = 'noopener noreferrer';
   streamBtn.setAttribute('aria-label', 'Open stream');
   streamBtn.textContent = '▶';
+  streamBtn.onclick = function (ev) {
+    ev.preventDefault();
+    submitPlayerPost(streamUrl);
+  };
 
   const imdbBtn = document.createElement('a');
   imdbBtn.className = 'overlay-btn secondary';
@@ -863,8 +892,8 @@ function renderLogoSection(rowId, items, type) {
 
     td.onclick = function () {
       const goTo = type === 'platform'
-        ? browseByPlatformUrl(item.provider_id, item.provider_name, 'movie')
-        : browseByCompanyUrl(item.id, item.name, 'movie');
+        ? browseByPlatformUrl(item.provider_id, item.provider_name, 'all')
+        : browseByCompanyUrl(item.id, item.name, 'all');
       if (goTo) {
         window.location.href = goTo;
       }
@@ -902,28 +931,169 @@ async function fetchMappedProducerCompanies() {
   return items.filter(function (x) { return x && x.name; });
 }
 
+function mergeAndDedupeByIdName(items, idKey, nameKey) {
+  const out = [];
+  const seen = new Set();
+  (items || []).forEach(function (item) {
+    if (!item || !item[idKey]) {
+      return;
+    }
+    const key = String(item[idKey]) + '::' + String((item[nameKey] || '').toLowerCase());
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    out.push(item);
+  });
+  return out;
+}
+
+function renderArtistsSection(rowId, items) {
+  const row = document.getElementById(rowId);
+  if (!row) {
+    return;
+  }
+  row.innerHTML = '';
+
+  items.slice(0, 20).forEach(function (item) {
+    const td = document.createElement('td');
+    td.className = 'clickable';
+
+    const tile = document.createElement('div');
+    tile.className = 'logo-tile';
+
+    const img = document.createElement('img');
+    img.className = 'logo-tile-img';
+    img.alt = (item.name || 'artist') + ' photo';
+    img.src = profileLogoUrl(item.profile_path || '') || '../assets/profile.png';
+
+    tile.appendChild(img);
+    td.appendChild(tile);
+
+    td.onclick = function () {
+      const goTo = browseByArtistUrl(item.id, item.name || 'Artist');
+      if (goTo) {
+        window.location.href = goTo;
+      }
+    };
+
+    row.appendChild(td);
+  });
+}
+
+async function loadArtistsGroup() {
+  try {
+    const data = await fetchJson('/person/popular', { language: 'en-US', page: 1 });
+    const candidates = (data.results || []).filter(function (x) {
+      return x && x.id;
+    }).slice(0, 35);
+
+    const ranked = await Promise.all(candidates.map(async function (artist) {
+      let bestScore = 0;
+      let bestVotes = 0;
+      try {
+        const credits = await fetchJson('/person/' + artist.id + '/movie_credits', { language: 'en-US' });
+        const movies = (credits.cast || []).filter(function (m) {
+          return m && m.id && Number(m.vote_count || 0) >= 200;
+        });
+        movies.forEach(function (m) {
+          const score = Number(m.vote_average || 0);
+          const votes = Number(m.vote_count || 0);
+          if (score > bestScore || (score === bestScore && votes > bestVotes)) {
+            bestScore = score;
+            bestVotes = votes;
+          }
+        });
+      } catch (_) {
+      }
+      return {
+        artist: artist,
+        bestMovieScore: bestScore,
+        bestMovieVotes: bestVotes,
+        popularity: Number(artist.popularity || 0)
+      };
+    }));
+
+    ranked.sort(function (a, b) {
+      if (b.bestMovieScore !== a.bestMovieScore) return b.bestMovieScore - a.bestMovieScore;
+      if (b.bestMovieVotes !== a.bestMovieVotes) return b.bestMovieVotes - a.bestMovieVotes;
+      return b.popularity - a.popularity;
+    });
+
+    const artists = ranked.map(function (x) { return x.artist; }).slice(0, 20);
+    renderArtistsSection('section-artists', artists);
+  } catch (_) {
+    renderArtistsSection('section-artists', []);
+  }
+}
+
 async function loadDiscoverGroups() {
-  let platformItems = [];
-  let companyItems = [];
+  let platformItemsMovie = [];
+  let platformItemsTv = [];
+  let companyItemsMovie = [];
+  let companyItemsTv = [];
 
   try {
-    const watchProviders = await fetchJson('/watch/providers/movie', { language: 'en-US', watch_region: 'US' });
-    platformItems = uniqueItemsByLocalLogo(
-      (watchProviders.results || []).filter(function (x) {
+    const watchProvidersMovie = await fetchJson('/watch/providers/movie', { language: 'en-US', watch_region: 'US' });
+    platformItemsMovie = uniqueItemsByLocalLogo(
+      (watchProvidersMovie.results || []).filter(function (x) {
         return x && x.provider_id && x.provider_name && hasLocalBrandLogo(x.provider_name);
       }),
       function (x) { return x.provider_name; }
-    ).slice(0, 10);
+    ).slice(0, 20);
   } catch (_) {
   }
 
   try {
-    companyItems = await fetchMappedProducerCompanies();
+    const watchProvidersTv = await fetchJson('/watch/providers/tv', { language: 'en-US', watch_region: 'US' });
+    platformItemsTv = uniqueItemsByLocalLogo(
+      (watchProvidersTv.results || []).filter(function (x) {
+        return x && x.provider_id && x.provider_name && hasLocalBrandLogo(x.provider_name);
+      }),
+      function (x) { return x.provider_name; }
+    ).slice(0, 20);
   } catch (_) {
   }
 
-  renderLogoSection('section-platforms', platformItems, 'platform');
-  renderLogoSection('section-companies', companyItems, 'company');
+  try {
+    companyItemsMovie = await fetchMappedProducerCompanies();
+  } catch (_) {
+  }
+
+  try {
+    const tvNetworkRes = await fetchJson('/discover/tv', {
+      language: 'en-US',
+      sort_by: 'popularity.desc',
+      include_adult: false,
+      page: 1
+    });
+    const networkMap = new Map();
+    await Promise.all((tvNetworkRes.results || []).slice(0, 20).map(async function (item) {
+      if (!item || !item.id) {
+        return;
+      }
+      try {
+        const details = await fetchJson('/tv/' + item.id, { language: 'en-US' });
+        (details.networks || []).forEach(function (n) {
+          if (!n || !n.id || !n.name) {
+            return;
+          }
+          if (!networkMap.has(n.id)) {
+            networkMap.set(n.id, { id: n.id, name: n.name, logo_path: n.logo_path || '' });
+          }
+        });
+      } catch (_) {
+      }
+    }));
+    companyItemsTv = Array.from(networkMap.values());
+  } catch (_) {
+  }
+
+  const mergedPlatforms = mergeAndDedupeByIdName(platformItemsMovie.concat(platformItemsTv), 'provider_id', 'provider_name');
+  const mergedCompanies = mergeAndDedupeByIdName(companyItemsMovie.concat(companyItemsTv), 'id', 'name');
+
+  renderLogoSection('section-platforms', mergedPlatforms, 'platform');
+  renderLogoSection('section-companies', mergedCompanies, 'company');
 }
 
 function renderSection(rowId, items, ratioType, logoMap, fallbackType) {
@@ -932,13 +1102,19 @@ function renderSection(rowId, items, ratioType, logoMap, fallbackType) {
 
   items.slice(0, 10).forEach((item, idx) => {
     const td = document.createElement('td');
+    const isContinueRow = rowId === 'section-continue';
+    const continueUrl = isContinueRow ? continueStreamUrl(item) : '';
     let goTo = detailsUrl(item, fallbackType);
-    if (rowId === 'section-continue') {
-      goTo = continueStreamUrl(item) || goTo;
+    if (isContinueRow && continueUrl) {
+      goTo = continueUrl;
     }
     if (goTo) {
       td.className = 'clickable';
       td.onclick = function () {
+        if (isContinueRow && continueUrl) {
+          submitPlayerPost(continueUrl);
+          return;
+        }
         window.location.href = goTo;
       };
     }
@@ -1151,6 +1327,7 @@ async function load() {
     renderSection('section-movies', movieTop, '3:2', movieLogos, 'movie');
     await initGenreSection();
     await loadDiscoverGroups();
+    await loadArtistsGroup();
 
     applyScrollReveal();
     syncBrandOnScroll();

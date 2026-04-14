@@ -91,6 +91,64 @@ try {
     exit;
 }
 
+function isPublicIpAddress($ip)
+{
+    if (!is_string($ip) || $ip === '') {
+        return false;
+    }
+    return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
+}
+
+function countryFromLanguage($language)
+{
+    if (!is_string($language) || $language === '') {
+        return '';
+    }
+    if (preg_match('/^[a-z]{2,3}[-_]([a-z]{2})/i', $language, $m)) {
+        return strtoupper((string) $m[1]);
+    }
+    return '';
+}
+
+function geolocateFromIp($ip)
+{
+    if (!isPublicIpAddress($ip)) {
+        return ['country' => '', 'region' => '', 'city' => ''];
+    }
+    $urls = [
+        'https://ipapi.co/' . rawurlencode($ip) . '/json/',
+        'https://ip-api.com/json/' . rawurlencode($ip)
+    ];
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'GET',
+            'timeout' => 2,
+            'ignore_errors' => true,
+            'header' => "Accept: application/json\r\nUser-Agent: StreamihaAnalytics/1.0\r\n"
+        ]
+    ]);
+    foreach ($urls as $url) {
+        $raw = @file_get_contents($url, false, $context);
+        if (!is_string($raw) || $raw === '') {
+            continue;
+        }
+        $json = json_decode($raw, true);
+        if (!is_array($json)) {
+            continue;
+        }
+        $country = trim((string) ($json['country_name'] ?? $json['country'] ?? ''));
+        $region = trim((string) ($json['region'] ?? $json['regionName'] ?? ''));
+        $city = trim((string) ($json['city'] ?? ''));
+        if ($country !== '' || $region !== '' || $city !== '') {
+            if (strlen($country) === 2) {
+                $country = strtoupper($country);
+            }
+            return ['country' => $country, 'region' => $region, 'city' => $city];
+        }
+    }
+    return ['country' => '', 'region' => '', 'city' => ''];
+}
+
 if ($method === 'GET') {
     $action = isset($_GET['action']) ? (string) $_GET['action'] : '';
     if ($action !== 'stats') {
@@ -255,6 +313,27 @@ $region = substr($region, 0, 120);
 $city = substr($city, 0, 120);
 $timezone = substr($timezone, 0, 80);
 $language = substr($language, 0, 40);
+
+$geo = ['country' => '', 'region' => '', 'city' => ''];
+if ($country === '' || $region === '' || $city === '') {
+    $geo = geolocateFromIp($clientIp);
+}
+if ($country === '') {
+    $country = (string) ($geo['country'] ?? '');
+}
+if ($region === '') {
+    $region = (string) ($geo['region'] ?? '');
+}
+if ($city === '') {
+    $city = (string) ($geo['city'] ?? '');
+}
+if ($country === '') {
+    $country = countryFromLanguage($language);
+}
+
+$country = substr($country, 0, 80);
+$region = substr($region, 0, 120);
+$city = substr($city, 0, 120);
 $now = time();
 
 $upsert = $db->prepare('INSERT INTO sessions (session_id, first_seen, last_seen, user_agent, source, last_page, ip_address, country, region, city, timezone, language)

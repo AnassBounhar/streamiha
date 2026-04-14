@@ -224,6 +224,122 @@ let ytApiPromise;
 let trailerPlayer;
 let trailerSwapIntervalId = null;
 let trailerFallbackTriggered = false;
+let streamGuardObserver = null;
+let streamGuardOpenPatched = false;
+let streamGuardEnabled = false;
+let originalWindowOpen = null;
+const STREAM_EMBED_HOST = 'www.vidking.net';
+
+function hostFromUrl(url) {
+  try {
+    return new URL(String(url || ''), window.location.href).hostname;
+  } catch (_) {
+    return '';
+  }
+}
+
+function ensureStreamWindowOpenGuard() {
+  if (streamGuardOpenPatched) {
+    return;
+  }
+  originalWindowOpen = window.open;
+  window.open = function (url, target, features) {
+    if (!streamGuardEnabled) {
+      return originalWindowOpen ? originalWindowOpen.call(window, url, target, features) : null;
+    }
+    const host = hostFromUrl(url);
+    if (!host || host === window.location.hostname || host === STREAM_EMBED_HOST) {
+      return originalWindowOpen ? originalWindowOpen.call(window, url, target, features) : null;
+    }
+    return null;
+  };
+  streamGuardOpenPatched = true;
+}
+
+function disconnectStreamGuards() {
+  if (streamGuardObserver) {
+    streamGuardObserver.disconnect();
+    streamGuardObserver = null;
+  }
+  streamGuardEnabled = false;
+}
+
+function guardTrailerOverlayNodes(root, frame) {
+  if (!root || !frame) {
+    return;
+  }
+  const clean = function () {
+    const rect = frame.getBoundingClientRect();
+    const nodes = root.querySelectorAll('a, button, iframe, div, section, aside');
+    nodes.forEach(function (node) {
+      if (node === frame) {
+        return;
+      }
+      if (node.classList && (node.classList.contains('trailer-overlay') || node.classList.contains('trailer-loader') || node.classList.contains('trailer-loader-spinner'))) {
+        return;
+      }
+      if (node.closest && node.closest('.trailer-overlay')) {
+        return;
+      }
+      const style = window.getComputedStyle(node);
+      if (style.position !== 'fixed' && style.position !== 'absolute') {
+        return;
+      }
+      const z = Number(style.zIndex || '0');
+      if (z < 1000) {
+        return;
+      }
+      const r = node.getBoundingClientRect();
+      const overlaps = !(r.right < rect.left || r.left > rect.right || r.bottom < rect.top || r.top > rect.bottom);
+      if (overlaps) {
+        node.remove();
+      }
+    });
+  };
+  clean();
+  if (streamGuardObserver) {
+    streamGuardObserver.disconnect();
+  }
+  streamGuardObserver = new MutationObserver(clean);
+  streamGuardObserver.observe(root, { childList: true, subtree: true });
+}
+
+function bindTrailerExternalClickGuard(el) {
+  if (!el || el.dataset.streamGuardClickBound === '1') {
+    return;
+  }
+  el.addEventListener('click', function (ev) {
+    if (!streamGuardEnabled) {
+      return;
+    }
+    const link = ev.target && ev.target.closest ? ev.target.closest('a[href]') : null;
+    if (!link) {
+      return;
+    }
+    const host = hostFromUrl(link.href);
+    if (host && host !== window.location.hostname && host !== STREAM_EMBED_HOST) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
+  }, true);
+  el.dataset.streamGuardClickBound = '1';
+}
+
+function submitPlayerPost(url) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = './player.php';
+  form.style.display = 'none';
+
+  const input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = 'stream_url';
+  input.value = String(url || '');
+
+  form.appendChild(input);
+  document.body.appendChild(form);
+  form.submit();
+}
 
 function vidkingEmbedUrl(type, id, season, episode) {
   const params = new URLSearchParams({
@@ -460,6 +576,7 @@ function stopTrailerPlayback() {
     trailerPlayer.destroy();
   }
   trailerPlayer = undefined;
+  disconnectStreamGuards();
 }
 
 function setStreamButtonState() {
@@ -491,9 +608,14 @@ function renderActivePlayback() {
   }
 
   if (activePlayback === 'stream') {
+    streamGuardEnabled = true;
+    ensureStreamWindowOpenGuard();
+    bindTrailerExternalClickGuard(el);
     renderVidkingFrame(el, currentType, currentId, currentSeason, currentEpisode);
     return;
   }
+
+  disconnectStreamGuards();
 
   if (!currentTrailerKey) {
     const overlay = el.querySelector('.trailer-overlay');
@@ -546,14 +668,14 @@ function attachOverlay(el, logoPath, imdbUrl, titleText, synopsis, rating) {
   streamBtn.id = 'stream-btn';
   streamBtn.className = 'overlay-play-btn';
   streamBtn.href = vidkingEmbedUrl(currentType, currentId, currentSeason, currentEpisode);
-  streamBtn.target = '_blank';
-  streamBtn.rel = 'noopener noreferrer';
   streamBtn.setAttribute('aria-label', 'Play selected stream');
   streamBtn.textContent = '▶';
-  streamBtn.onclick = function () {
+  streamBtn.onclick = function (ev) {
+    ev.preventDefault();
     if (currentContinuePayload) {
       saveContinuePlayingMovie(currentContinuePayload);
     }
+    submitPlayerPost(streamBtn.href);
   };
 
   const imdbBtn = document.createElement('a');
@@ -607,11 +729,13 @@ function renderVidkingFrame(el, type, id, season, episode) {
   vidkingFrame.src = vidkingEmbedUrl(type, id, season, episode);
   vidkingFrame.loading = 'lazy';
   vidkingFrame.referrerPolicy = 'origin';
+  vidkingFrame.sandbox = 'allow-scripts allow-same-origin allow-forms allow-presentation';
   vidkingFrame.allowFullscreen = true;
   vidkingFrame.addEventListener('load', function () {
     if (loader && loader.parentNode) {
       loader.parentNode.removeChild(loader);
     }
+    guardTrailerOverlayNodes(el, vidkingFrame);
   });
   if (existingOverlay) {
     el.insertBefore(vidkingFrame, existingOverlay);

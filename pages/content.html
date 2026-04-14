@@ -4,20 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="../assets/favicon.ico" type="image/x-icon" />
-  <title>TV Shows - Streamiha</title>
-  <link rel="stylesheet" href="../css/tvshows.css" />
+  <title>Content - Streamiha</title>
+  <link rel="stylesheet" href="../css/content.css" />
 </head>
 <body>
   <div id="loader"><div class="loader-spinner"></div></div>
 
   <div id="app">
-    <section class="hero">
+    <section class="hero" id="content-hero">
       <div class="topbar">
         <a href="./index.html" class="back-fab" aria-label="Back to home">←</a>
-        <h1 id="page-title">TV Shows</h1>
       </div>
       <img id="brand-logo" class="hero-logo" alt="Brand logo" />
+      <div id="hero-title" class="hero-title"></div>
     </section>
+
+    <div class="content-head">
+      <div id="media-filter-tabs" class="media-filter-tabs"></div>
+    </div>
 
     <div id="movies-grid" class="grid"></div>
 
@@ -34,6 +38,6 @@
   <script src="../js/logo-map.js"></script>
   <script src="../js/cache.js"></script>
   <script src="../js/analytics.js"></script>
-  <script src="../js/tvshows.js"></script>
+  <script src="../js/content.js"></script>
 </body>
 </html>
