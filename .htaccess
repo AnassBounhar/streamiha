@@ -1,5 +1,6 @@
 Options -Indexes
 ServerSignature Off
+ErrorDocument 404 /pages/oopsy.html
 
 <FilesMatch "(^\.|\.env|composer\.(json|lock)|package(-lock)?\.json|yarn\.lock|pnpm-lock\.yaml)$">
 Require all denied
@@ -8,6 +9,7 @@ Require all denied
 <IfModule mod_rewrite.c>
 RewriteEngine On
 RewriteRule ^analytics/?$ /pages/analytics.html [L,NC]
+RewriteRule ^player\.php$ /pages/player.php [L,NC]
 RewriteCond %{REQUEST_URI} ^/$
 RewriteRule ^$ /pages/index.html [L]
 RewriteRule ^index\.html$ /pages/index.html [L]
