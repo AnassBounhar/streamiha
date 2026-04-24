@@ -4,12 +4,49 @@
   const backBtn = document.getElementById('back-btn');
   const EMBED_HOST = 'www.vidking.net';
   let hideTimer = null;
+  let popupNotice = null;
+  let popupNoticeTimer = null;
+  let frameIntentAt = 0;
 
   function showBackButton() {
     if (!backBtn) {
       return;
     }
     backBtn.classList.remove('hidden');
+  }
+
+  function showPopupNotice() {
+    if (!shell) {
+      return;
+    }
+    if (!popupNotice) {
+      popupNotice = document.createElement('div');
+      popupNotice.style.position = 'fixed';
+      popupNotice.style.left = '50%';
+      popupNotice.style.bottom = '20px';
+      popupNotice.style.transform = 'translateX(-50%)';
+      popupNotice.style.maxWidth = 'calc(100vw - 24px)';
+      popupNotice.style.padding = '10px 14px';
+      popupNotice.style.borderRadius = '10px';
+      popupNotice.style.background = 'rgba(15, 23, 42, 0.88)';
+      popupNotice.style.color = '#e2e8f0';
+      popupNotice.style.fontSize = '13px';
+      popupNotice.style.lineHeight = '1.35';
+      popupNotice.style.zIndex = '13000';
+      popupNotice.style.boxShadow = '0 10px 32px rgba(2, 6, 23, 0.45)';
+      popupNotice.style.pointerEvents = 'none';
+      popupNotice.textContent = 'Potential popup blocked. Tap player again if playback paused.';
+      shell.appendChild(popupNotice);
+    }
+    popupNotice.style.display = 'block';
+    if (popupNoticeTimer) {
+      clearTimeout(popupNoticeTimer);
+    }
+    popupNoticeTimer = setTimeout(function () {
+      if (popupNotice) {
+        popupNotice.style.display = 'none';
+      }
+    }, 2600);
   }
 
   function hideBackButton() {
@@ -126,6 +163,25 @@
 
   blockPopupsAndEscapes();
   guardOverlays();
+
+  frame.addEventListener('pointerdown', function () {
+    frameIntentAt = Date.now();
+  }, { passive: true });
+
+  frame.addEventListener('touchstart', function () {
+    frameIntentAt = Date.now();
+  }, { passive: true });
+
+  window.addEventListener('blur', function () {
+    if (!frameIntentAt) {
+      return;
+    }
+    const elapsed = Date.now() - frameIntentAt;
+    if (elapsed > 0 && elapsed < 2200) {
+      restartBackButtonTimer();
+      showPopupNotice();
+    }
+  });
 
   if (backBtn) {
     backBtn.addEventListener('mouseenter', function () {
