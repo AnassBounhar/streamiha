@@ -37,11 +37,15 @@
     }
   }
 
+  function isAllowedHost(host) {
+    return !host || host === window.location.hostname || host === EMBED_HOST;
+  }
+
   function blockPopupsAndEscapes() {
     const nativeOpen = window.open;
     window.open = function (url, target, features) {
       const host = getHost(url);
-      if (!host || host === window.location.hostname || host === EMBED_HOST) {
+      if (isAllowedHost(host)) {
         return nativeOpen ? nativeOpen.call(window, url, target, features) : null;
       }
       return null;
@@ -53,7 +57,20 @@
         return;
       }
       const host = getHost(link.href);
-      if (host && host !== window.location.hostname && host !== EMBED_HOST) {
+      if (!isAllowedHost(host)) {
+        ev.preventDefault();
+        ev.stopPropagation();
+      }
+    }, true);
+
+    document.addEventListener('submit', function (ev) {
+      const form = ev.target;
+      if (!form || !form.getAttribute) {
+        return;
+      }
+      const action = form.getAttribute('action') || '';
+      const host = getHost(action);
+      if (!isAllowedHost(host)) {
         ev.preventDefault();
         ev.stopPropagation();
       }
