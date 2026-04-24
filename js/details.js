@@ -228,7 +228,8 @@ let streamGuardObserver = null;
 let streamGuardOpenPatched = false;
 let streamGuardEnabled = false;
 let originalWindowOpen = null;
-const STREAM_EMBED_HOST = 'www.vidking.net';
+let currentStreamSource = 'vidking';
+const STREAM_EMBED_HOSTS = ['www.vidking.net', 'vidking.net', 'vidsrc.icu', 'www.vidsrc.icu', 'autoembed.cc', 'www.autoembed.cc'];
 
 function hostFromUrl(url) {
   try {
@@ -248,7 +249,7 @@ function ensureStreamWindowOpenGuard() {
       return originalWindowOpen ? originalWindowOpen.call(window, url, target, features) : null;
     }
     const host = hostFromUrl(url);
-    if (!host || host === window.location.hostname || host === STREAM_EMBED_HOST) {
+    if (!host || host === window.location.hostname || STREAM_EMBED_HOSTS.includes(host)) {
       return originalWindowOpen ? originalWindowOpen.call(window, url, target, features) : null;
     }
     return null;
@@ -317,7 +318,7 @@ function bindTrailerExternalClickGuard(el) {
       return;
     }
     const host = hostFromUrl(link.href);
-    if (host && host !== window.location.hostname && host !== STREAM_EMBED_HOST) {
+    if (host && host !== window.location.hostname && !STREAM_EMBED_HOSTS.includes(host)) {
       ev.preventDefault();
       ev.stopPropagation();
     }
@@ -341,19 +342,42 @@ function submitPlayerPost(url) {
   form.submit();
 }
 
-function vidkingEmbedUrl(type, id, season, episode) {
+function buildStreamEmbedUrl(source, type, id, season, episode) {
+  const safeType = type === 'tv' ? 'tv' : 'movie';
+  const safeId = encodeURIComponent(id);
+  const safeSeason = encodeURIComponent(season || 1);
+  const safeEpisode = encodeURIComponent(episode || 1);
+
+  if (source === 'vidsrc') {
+    if (safeType === 'tv') {
+      return 'https://vidsrc.icu/embed/tv/' + safeId + '/' + safeSeason + '/' + safeEpisode;
+    }
+    return 'https://vidsrc.icu/embed/movie/' + safeId;
+  }
+
+  if (source === 'autoembed') {
+    if (safeType === 'tv') {
+      return 'https://autoembed.cc/embed/tv/' + safeId + '/' + safeSeason + '/' + safeEpisode;
+    }
+    return 'https://autoembed.cc/embed/movie/' + safeId;
+  }
+
   const params = new URLSearchParams({
     color: '3b82f6',
     autoPlay: 'true',
     autoplay: '1',
     muted: '1'
   });
-  if (type === 'tv') {
+  if (safeType === 'tv') {
     params.set('nextEpisode', 'true');
     params.set('episodeSelector', 'true');
-    return 'https://www.vidking.net/embed/tv/' + encodeURIComponent(id) + '/' + encodeURIComponent(season) + '/' + encodeURIComponent(episode) + '?' + params.toString();
+    return 'https://www.vidking.net/embed/tv/' + safeId + '/' + safeSeason + '/' + safeEpisode + '?' + params.toString();
   }
-  return 'https://www.vidking.net/embed/movie/' + encodeURIComponent(id) + '?' + params.toString();
+  return 'https://www.vidking.net/embed/movie/' + safeId + '?' + params.toString();
+}
+
+function currentStreamEmbedUrl() {
+  return buildStreamEmbedUrl(currentStreamSource, currentType, currentId, currentSeason, currentEpisode);
 }
 
 function attachVidkingLoader(el, beforeNode) {
@@ -581,10 +605,13 @@ function stopTrailerPlayback() {
 
 function setStreamButtonState() {
   const btn = q('stream-btn');
-  if (!btn) {
-    return;
+  if (btn) {
+    btn.href = currentStreamEmbedUrl();
   }
-  btn.href = vidkingEmbedUrl(currentType, currentId, currentSeason, currentEpisode);
+  const sourceSelect = q('stream-source-select');
+  if (sourceSelect) {
+    sourceSelect.value = currentStreamSource;
+  }
   if (currentContinuePayload) {
     currentContinuePayload.season_number = currentType === 'tv' ? currentSeason : 1;
     currentContinuePayload.episode_number = currentType === 'tv' ? currentEpisode : 1;
@@ -611,7 +638,7 @@ function renderActivePlayback() {
     streamGuardEnabled = true;
     ensureStreamWindowOpenGuard();
     bindTrailerExternalClickGuard(el);
-    renderVidkingFrame(el, currentType, currentId, currentSeason, currentEpisode);
+    renderVidkingFrame(el);
     return;
   }
 
@@ -667,7 +694,7 @@ function attachOverlay(el, logoPath, imdbUrl, titleText, synopsis, rating) {
   const streamBtn = document.createElement('a');
   streamBtn.id = 'stream-btn';
   streamBtn.className = 'overlay-play-btn';
-  streamBtn.href = vidkingEmbedUrl(currentType, currentId, currentSeason, currentEpisode);
+  streamBtn.href = currentStreamEmbedUrl();
   streamBtn.setAttribute('aria-label', 'Play selected stream');
   streamBtn.textContent = '▶';
   streamBtn.onclick = function (ev) {
@@ -678,12 +705,32 @@ function attachOverlay(el, logoPath, imdbUrl, titleText, synopsis, rating) {
     submitPlayerPost(streamBtn.href);
   };
 
-  const imdbBtn = document.createElement('a');
-  imdbBtn.className = 'overlay-btn secondary';
-  imdbBtn.href = imdbUrl;
-  imdbBtn.target = '_blank';
-  imdbBtn.rel = 'noopener noreferrer';
-  imdbBtn.textContent = 'i';
+  const sourceSelect = document.createElement('select');
+  sourceSelect.id = 'stream-source-select';
+  sourceSelect.className = 'overlay-source-select';
+
+  const sourceOptions = [
+    { value: 'vidking', label: 'Vidking' },
+    { value: 'vidsrc', label: 'VidSrc' },
+    { value: 'autoembed', label: 'AutoEmbed' }
+  ];
+
+  sourceOptions.forEach(function (opt) {
+    const option = document.createElement('option');
+    option.value = opt.value;
+    option.textContent = opt.label;
+    sourceSelect.appendChild(option);
+  });
+
+  sourceSelect.value = currentStreamSource;
+  sourceSelect.onchange = function () {
+    const next = sourceSelect.value;
+    if (next === 'vidking' || next === 'vidsrc' || next === 'autoembed') {
+      currentStreamSource = next;
+      updateStreamSelection();
+    }
+  };
+
 
   const starBtn = document.createElement('button');
   starBtn.type = 'button';
@@ -714,6 +761,7 @@ function attachOverlay(el, logoPath, imdbUrl, titleText, synopsis, rating) {
   };
 
   actions.appendChild(streamBtn);
+  actions.appendChild(sourceSelect);
   actions.appendChild(imdbBtn);
   actions.appendChild(starBtn);
   panel.appendChild(actions);
@@ -721,12 +769,12 @@ function attachOverlay(el, logoPath, imdbUrl, titleText, synopsis, rating) {
   el.appendChild(overlay);
 }
 
-function renderVidkingFrame(el, type, id, season, episode) {
+function renderVidkingFrame(el) {
   const existingOverlay = el.querySelector('.trailer-overlay');
   const loader = attachVidkingLoader(el, existingOverlay || null);
   const vidkingFrame = document.createElement('iframe');
   vidkingFrame.className = 'vidking-frame';
-  vidkingFrame.src = vidkingEmbedUrl(type, id, season, episode);
+  vidkingFrame.src = currentStreamEmbedUrl();
   vidkingFrame.loading = 'lazy';
   vidkingFrame.referrerPolicy = 'origin';
   vidkingFrame.sandbox = 'allow-scripts allow-same-origin allow-forms allow-presentation';
@@ -747,6 +795,9 @@ function renderVidkingFrame(el, type, id, season, episode) {
 
 function updateStreamSelection() {
   setStreamButtonState();
+  if (activePlayback === 'stream') {
+    renderActivePlayback();
+  }
 }
 
 function bindEpisodeControls(details) {
@@ -826,6 +877,7 @@ async function renderTrailer(key, titleText, logoPath, imdbUrl, synopsis, rating
   currentEpisode = 1;
   currentTrailerKey = key || '';
   currentBackdropPath = details && (details.backdrop_path || details.poster_path) ? (details.backdrop_path || details.poster_path) : '';
+  currentStreamSource = 'vidking';
   activePlayback = 'trailer';
 
   if (currentTrailerKey && window.location.protocol !== 'file:') {

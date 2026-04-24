@@ -2,7 +2,7 @@
   const frame = document.getElementById('player-frame');
   const shell = document.getElementById('player-shell');
   const backBtn = document.getElementById('back-btn');
-  const EMBED_HOST = 'www.vidking.net';
+  const ALLOWED_EMBED_HOSTS = ['www.vidking.net', 'vidking.net', 'vidsrc.icu', 'www.vidsrc.icu', 'autoembed.cc', 'www.autoembed.cc'];
   let hideTimer = null;
   let popupNotice = null;
   let popupNoticeTimer = null;
@@ -75,7 +75,7 @@
   }
 
   function isAllowedHost(host) {
-    return !host || host === window.location.hostname || host === EMBED_HOST;
+    return !host || host === window.location.hostname || ALLOWED_EMBED_HOSTS.includes(host);
   }
 
   function blockPopupsAndEscapes() {

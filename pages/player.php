@@ -1,11 +1,19 @@
 <?php
 $postedUrl = isset($_POST['stream_url']) ? trim((string) $_POST['stream_url']) : '';
 $embedUrl = '';
+$allowedHosts = [
+    'www.vidking.net',
+    'vidking.net',
+    'vidsrc.icu',
+    'www.vidsrc.icu',
+    'autoembed.cc',
+    'www.autoembed.cc'
+];
 if ($postedUrl !== '') {
     $parts = parse_url($postedUrl);
     $host = isset($parts['host']) ? strtolower((string) $parts['host']) : '';
     $scheme = isset($parts['scheme']) ? strtolower((string) $parts['scheme']) : '';
-    if (($host === 'www.vidking.net' || $host === 'vidking.net') && ($scheme === 'https' || $scheme === 'http')) {
+    if (in_array($host, $allowedHosts, true) && ($scheme === 'https' || $scheme === 'http')) {
         $embedUrl = $postedUrl;
     }
 }
