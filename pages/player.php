@@ -6,6 +6,8 @@ $iframeSandbox = '';
 $allowedHosts = [
     'www.vidking.net',
     'vidking.net',
+    'vidsrc.to',
+    'www.vidsrc.to',
     'vidsrc.icu',
     'www.vidsrc.icu',
     'player.autoembed.cc',
@@ -21,7 +23,7 @@ if ($postedUrl !== '') {
         $embedHost = $host;
     }
 }
-if ($embedHost === 'vidsrc.icu' || $embedHost === 'www.vidsrc.icu') {
+if ($embedHost === 'vidsrc.to' || $embedHost === 'www.vidsrc.to' || $embedHost === 'vidsrc.icu' || $embedHost === 'www.vidsrc.icu') {
     $iframeSandbox = 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation';
 }
 if ($embedHost === 'www.vidking.net' || $embedHost === 'vidking.net' || $embedHost === 'player.autoembed.cc' || $embedHost === 'autoembed.cc' || $embedHost === 'www.autoembed.cc') {

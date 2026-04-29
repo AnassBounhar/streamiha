@@ -234,7 +234,7 @@ const STREAM_SOURCE_OPTIONS = [
   { value: 'vidsrc', label: 'VidSrc' },
   { value: 'autoembed', label: 'AutoEmbed' }
 ];
-const STREAM_EMBED_HOSTS = ['www.vidking.net', 'vidking.net', 'vidsrc.icu', 'www.vidsrc.icu', 'player.autoembed.cc', 'autoembed.cc', 'www.autoembed.cc'];
+const STREAM_EMBED_HOSTS = ['www.vidking.net', 'vidking.net', 'vidsrc.to', 'www.vidsrc.to', 'vidsrc.icu', 'www.vidsrc.icu', 'player.autoembed.cc', 'autoembed.cc', 'www.autoembed.cc'];
 
 function hostFromUrl(url) {
   try {
@@ -355,9 +355,9 @@ function buildStreamEmbedUrl(source, type, id, season, episode) {
 
   if (source === 'vidsrc') {
     if (safeType === 'tv') {
-      return 'https://vidsrc.icu/embed/tv/' + safeId + '/' + safeSeason + '/' + safeEpisode;
+      return 'https://vidsrc.to/embed/tv/' + safeId + '/' + safeSeason + '/' + safeEpisode;
     }
-    return 'https://vidsrc.icu/embed/movie/' + safeId;
+    return 'https://vidsrc.to/embed/movie/' + safeId;
   }
 
   if (source === 'autoembed') {

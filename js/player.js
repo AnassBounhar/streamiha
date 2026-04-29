@@ -2,7 +2,7 @@
   const frame = document.getElementById('player-frame');
   const shell = document.getElementById('player-shell');
   const backBtn = document.getElementById('back-btn');
-  const ALLOWED_EMBED_HOSTS = ['www.vidking.net', 'vidking.net', 'vidsrc.icu', 'www.vidsrc.icu', 'player.autoembed.cc', 'autoembed.cc', 'www.autoembed.cc'];
+  const ALLOWED_EMBED_HOSTS = ['www.vidking.net', 'vidking.net', 'vidsrc.to', 'www.vidsrc.to', 'vidsrc.icu', 'www.vidsrc.icu', 'player.autoembed.cc', 'autoembed.cc', 'www.autoembed.cc'];
   let hideTimer = null;
   let popupNotice = null;
   let popupNoticeTimer = null;
