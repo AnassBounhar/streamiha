@@ -98,6 +98,7 @@ if ($postedUrl !== '') {
         id="player-frame"
         src="<?php echo htmlspecialchars($embedUrl, ENT_QUOTES, 'UTF-8'); ?>"
         referrerpolicy="no-referrer"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups"
         allow="autoplay; fullscreen; picture-in-picture"
       ></iframe>
     </div>
