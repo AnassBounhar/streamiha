@@ -355,9 +355,9 @@ function buildStreamEmbedUrl(source, type, id, season, episode) {
 
   if (source === 'vidsrc') {
     if (safeType === 'tv') {
-      return 'https://vidsrc.to/embed/tv?tmdb=' + safeId + '&season=' + safeSeason + '&episode=' + safeEpisode;
+      return 'https://vidsrc.to/embed/tv/' + safeId + '/' + safeSeason + '/' + safeEpisode;
     }
-    return 'https://vidsrc.to/embed/movie?tmdb=' + safeId;
+    return 'https://vidsrc.to/embed/movie/' + safeId;
   }
 
   if (source === 'autoembed') {
