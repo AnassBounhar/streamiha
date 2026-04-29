@@ -1,6 +1,8 @@
 <?php
 $postedUrl = isset($_POST['stream_url']) ? trim((string) $_POST['stream_url']) : '';
 $embedUrl = '';
+$embedHost = '';
+$iframeSandbox = 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups';
 $allowedHosts = [
     'www.vidking.net',
     'vidking.net',
@@ -16,7 +18,11 @@ if ($postedUrl !== '') {
     $scheme = isset($parts['scheme']) ? strtolower((string) $parts['scheme']) : '';
     if (in_array($host, $allowedHosts, true) && ($scheme === 'https' || $scheme === 'http')) {
         $embedUrl = $postedUrl;
+        $embedHost = $host;
     }
+}
+if ($embedHost === 'vidsrc.icu' || $embedHost === 'www.vidsrc.icu') {
+    $iframeSandbox = 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation';
 }
 ?>
 <!doctype html>
@@ -98,7 +104,7 @@ if ($postedUrl !== '') {
         id="player-frame"
         src="<?php echo htmlspecialchars($embedUrl, ENT_QUOTES, 'UTF-8'); ?>"
         referrerpolicy="no-referrer"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups"
+        sandbox="<?php echo htmlspecialchars($iframeSandbox, ENT_QUOTES, 'UTF-8'); ?>"
         allow="autoplay; fullscreen; picture-in-picture"
       ></iframe>
     </div>
