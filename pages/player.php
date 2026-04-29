@@ -83,6 +83,24 @@ if ($embedHost === 'player.autoembed.cc' || $embedHost === 'autoembed.cc' || $em
       opacity: 0;
       pointer-events: none;
     }
+    .provider-fallback {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 12000;
+      display: flex;
+      gap: 8px;
+    }
+    .provider-fallback a {
+      color: #dbeafe;
+      text-decoration: none;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(15, 23, 42, 0.55);
+      font-size: 12px;
+      backdrop-filter: blur(6px);
+    }
     .player-shell {
       position: fixed;
       inset: 0;
@@ -125,6 +143,11 @@ if ($embedHost === 'player.autoembed.cc' || $embedHost === 'autoembed.cc' || $em
         allow="autoplay; fullscreen; picture-in-picture"
       ></iframe>
     </div>
+    <?php if ($embedProvider === 'vidsrc'): ?>
+      <div class="provider-fallback">
+        <a href="<?php echo htmlspecialchars($embedUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">Open VidSrc</a>
+      </div>
+    <?php endif; ?>
   <?php endif; ?>
 
   <script src="../js/analytics.js"></script>

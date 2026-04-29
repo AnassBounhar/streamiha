@@ -16,6 +16,34 @@
     backBtn.classList.remove('hidden');
   }
 
+  function showVidsrcFallbackHint() {
+    if (!shell) {
+      return;
+    }
+    const exists = document.getElementById('vidsrc-fallback-hint');
+    if (exists) {
+      return;
+    }
+    const hint = document.createElement('div');
+    hint.id = 'vidsrc-fallback-hint';
+    hint.style.position = 'fixed';
+    hint.style.left = '50%';
+    hint.style.bottom = '20px';
+    hint.style.transform = 'translateX(-50%)';
+    hint.style.maxWidth = 'calc(100vw - 24px)';
+    hint.style.padding = '10px 14px';
+    hint.style.borderRadius = '10px';
+    hint.style.background = 'rgba(15, 23, 42, 0.88)';
+    hint.style.color = '#e2e8f0';
+    hint.style.fontSize = '13px';
+    hint.style.lineHeight = '1.35';
+    hint.style.zIndex = '13000';
+    hint.style.boxShadow = '0 10px 32px rgba(2, 6, 23, 0.45)';
+    hint.textContent = 'VidSrc iframe may be blocked. Use Open VidSrc button.';
+    shell.appendChild(hint);
+  }
+
+
   function showPopupNotice() {
     if (!shell) {
       return;
@@ -169,11 +197,15 @@
         showBackButton();
       });
     }
+    const fallbackTimer = setTimeout(function () {
+      showVidsrcFallbackHint();
+    }, 4000);
     document.addEventListener('mousemove', restartBackButtonTimer, { passive: true });
     document.addEventListener('touchstart', restartBackButtonTimer, { passive: true });
     document.addEventListener('keydown', restartBackButtonTimer);
     restartBackButtonTimer();
     frame.addEventListener('load', function () {
+      clearTimeout(fallbackTimer);
       restartBackButtonTimer();
     });
     return;
