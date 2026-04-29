@@ -230,9 +230,9 @@ let streamGuardEnabled = false;
 let originalWindowOpen = null;
 let currentStreamSource = 'vidking';
 const STREAM_SOURCE_OPTIONS = [
-  { value: 'vidking', label: 'Vidking' },
-  { value: 'vidsrc', label: 'VidSrc' },
-  { value: 'autoembed', label: 'AutoEmbed' }
+  { value: 'vidking', label: 'Vidking', enabled: true },
+  { value: 'vidsrc', label: 'VidSrc', enabled: false },
+  { value: 'autoembed', label: 'AutoEmbed', enabled: false }
 ];
 const STREAM_EMBED_HOSTS = ['www.vidking.net', 'vidking.net', 'vidsrc.to', 'www.vidsrc.to', 'vidsrc.icu', 'www.vidsrc.icu', 'player.autoembed.cc', 'autoembed.cc', 'www.autoembed.cc'];
 
@@ -615,6 +615,13 @@ function streamSourceLabel(value) {
   return match ? match.label : 'Source';
 }
 
+function isStreamSourceEnabled(value) {
+  const match = STREAM_SOURCE_OPTIONS.find(function (opt) {
+    return opt.value === value;
+  });
+  return !!(match && match.enabled);
+}
+
 function setStreamButtonState() {
   const btn = q('stream-btn');
   if (btn) {
@@ -736,7 +743,18 @@ function attachOverlay(el, logoPath, imdbUrl, titleText, synopsis, rating) {
     menuBtn.className = 'overlay-source-option';
     menuBtn.dataset.value = opt.value;
     menuBtn.textContent = opt.label;
+    if (!opt.enabled) {
+      menuBtn.classList.add('readonly');
+      menuBtn.disabled = true;
+      const badge = document.createElement('span');
+      badge.className = 'overlay-source-soon';
+      badge.textContent = 'Coming soon';
+      menuBtn.appendChild(badge);
+    }
     menuBtn.onclick = function () {
+      if (!isStreamSourceEnabled(opt.value)) {
+        return;
+      }
       currentStreamSource = opt.value;
       updateStreamSelection();
       sourceMenu.classList.remove('open');
