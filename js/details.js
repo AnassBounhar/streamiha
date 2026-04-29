@@ -910,13 +910,18 @@ async function load() {
   }
 
   try {
-    const [details, credits, videos, images, recommendations] = await Promise.all([
-      fetchJson('/' + type + '/' + id, { language: 'en-US' }),
+    const details = await fetchJson('/' + type + '/' + id, { language: 'en-US' });
+    const [creditsResult, videosResult, imagesResult, recommendationsResult] = await Promise.allSettled([
       fetchJson('/' + type + '/' + id + '/credits', { language: 'en-US' }),
       fetchJson('/' + type + '/' + id + '/videos', { language: 'en-US' }),
       fetchJson('/' + type + '/' + id + '/images', { include_image_language: 'en,null' }),
       fetchJson('/' + type + '/' + id + '/recommendations', { language: 'en-US', page: 1 })
     ]);
+
+    const credits = creditsResult.status === 'fulfilled' ? creditsResult.value : { cast: [], crew: [] };
+    const videos = videosResult.status === 'fulfilled' ? videosResult.value : { results: [] };
+    const images = imagesResult.status === 'fulfilled' ? imagesResult.value : { logos: [] };
+    const recommendations = recommendationsResult.status === 'fulfilled' ? recommendationsResult.value : { results: [] };
 
     const logoPath = (images.logos || []).find((x) => x.iso_639_1 === 'en' && x.file_path)?.file_path ||
       (images.logos || []).find((x) => x.file_path)?.file_path ||
