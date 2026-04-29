@@ -731,6 +731,13 @@ function attachOverlay(el, logoPath, imdbUrl, titleText, synopsis, rating) {
     }
   };
 
+  const imdbBtn = document.createElement('a');
+  imdbBtn.className = 'overlay-btn secondary';
+  imdbBtn.href = imdbUrl || '#';
+  imdbBtn.target = '_blank';
+  imdbBtn.rel = 'noopener noreferrer';
+  imdbBtn.setAttribute('aria-label', 'Open on IMDb');
+  imdbBtn.textContent = 'i';
 
   const starBtn = document.createElement('button');
   starBtn.type = 'button';
