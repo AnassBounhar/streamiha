@@ -252,13 +252,40 @@
     .overlay-source-select {
       height: 44px;
       border-radius: 999px;
-      background: #111827;
-      border: 1px solid #374151;
-      color: #e5e7eb;
-      padding: 0 12px;
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.92) 0%, rgba(17, 24, 39, 0.92) 100%);
+      border: 1px solid rgba(96, 165, 250, 0.4);
+      color: #e2e8f0;
+      padding: 0 38px 0 14px;
       font-size: 13px;
-      font-weight: 600;
-      min-width: 118px;
+      font-weight: 700;
+      min-width: 132px;
+      letter-spacing: 0.2px;
+      box-shadow: 0 8px 18px rgba(2, 6, 23, 0.28);
+      backdrop-filter: blur(4px);
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      cursor: pointer;
+      background-image: linear-gradient(180deg, rgba(30, 41, 59, 0.92) 0%, rgba(17, 24, 39, 0.92) 100%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2393c5fd' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat, no-repeat;
+      background-position: center, right 14px center;
+      transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    }
+
+    .overlay-source-select:hover {
+      border-color: rgba(96, 165, 250, 0.75);
+      box-shadow: 0 10px 24px rgba(2, 6, 23, 0.34);
+    }
+
+    .overlay-source-select:focus {
+      outline: none;
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.28), 0 10px 24px rgba(2, 6, 23, 0.34);
+    }
+
+    .overlay-source-select option {
+      background: #0f172a;
+      color: #e2e8f0;
     }
 
     .overlay-star-btn {
