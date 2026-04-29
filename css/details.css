@@ -214,6 +214,7 @@
       display: flex;
       gap: 10px;
       align-items: center;
+      position: relative;
     }
 
     .overlay-play-btn {
@@ -272,20 +273,57 @@
       transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
     }
 
-    .overlay-source-select:hover {
-      border-color: rgba(96, 165, 250, 0.75);
-      box-shadow: 0 10px 24px rgba(2, 6, 23, 0.34);
+    .overlay-source-menu {
+      position: absolute;
+      left: 54px;
+      top: calc(100% + 8px);
+      min-width: 170px;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px;
+      border-radius: 14px;
+      border: 1px solid rgba(96, 165, 250, 0.36);
+      background: rgba(15, 23, 42, 0.94);
+      box-shadow: 0 16px 32px rgba(2, 6, 23, 0.45);
+      backdrop-filter: blur(7px);
+      z-index: 7;
     }
 
-    .overlay-source-select:focus {
+    .overlay-source-menu.open {
+      display: flex;
+    }
+
+    .overlay-source-option {
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: left;
+      padding: 0 12px;
+      cursor: pointer;
+      transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+    }
+
+    .overlay-source-option:hover {
+      background: rgba(30, 64, 175, 0.28);
+      border-color: rgba(96, 165, 250, 0.4);
+      color: #eff6ff;
+    }
+
+    .overlay-source-option.active {
+      background: rgba(37, 99, 235, 0.34);
+      border-color: rgba(96, 165, 250, 0.68);
+      color: #eff6ff;
+    }
+
+    .overlay-source-option:focus {
       outline: none;
       border-color: #60a5fa;
-      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.28), 0 10px 24px rgba(2, 6, 23, 0.34);
-    }
-
-    .overlay-source-select option {
-      background: #0f172a;
-      color: #e2e8f0;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.24);
     }
 
     .overlay-star-btn {

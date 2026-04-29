@@ -229,6 +229,11 @@ let streamGuardOpenPatched = false;
 let streamGuardEnabled = false;
 let originalWindowOpen = null;
 let currentStreamSource = 'vidking';
+const STREAM_SOURCE_OPTIONS = [
+  { value: 'vidking', label: 'Vidking' },
+  { value: 'vidsrc', label: 'VidSrc' },
+  { value: 'autoembed', label: 'AutoEmbed' }
+];
 const STREAM_EMBED_HOSTS = ['www.vidking.net', 'vidking.net', 'vidsrc.icu', 'www.vidsrc.icu', 'autoembed.cc', 'www.autoembed.cc'];
 
 function hostFromUrl(url) {
@@ -709,17 +714,26 @@ function attachOverlay(el, logoPath, imdbUrl, titleText, synopsis, rating) {
   sourceSelect.id = 'stream-source-select';
   sourceSelect.className = 'overlay-source-select';
 
-  const sourceOptions = [
-    { value: 'vidking', label: 'Vidking' },
-    { value: 'vidsrc', label: 'VidSrc' },
-    { value: 'autoembed', label: 'AutoEmbed' }
-  ];
+  const sourceMenu = document.createElement('div');
+  sourceMenu.className = 'overlay-source-menu';
 
-  sourceOptions.forEach(function (opt) {
+  STREAM_SOURCE_OPTIONS.forEach(function (opt) {
     const option = document.createElement('option');
     option.value = opt.value;
     option.textContent = opt.label;
     sourceSelect.appendChild(option);
+
+    const menuBtn = document.createElement('button');
+    menuBtn.type = 'button';
+    menuBtn.className = 'overlay-source-option';
+    menuBtn.dataset.value = opt.value;
+    menuBtn.textContent = opt.label;
+    menuBtn.onclick = function () {
+      sourceSelect.value = opt.value;
+      sourceSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      sourceMenu.classList.remove('open');
+    };
+    sourceMenu.appendChild(menuBtn);
   });
 
   sourceSelect.value = currentStreamSource;
@@ -728,8 +742,36 @@ function attachOverlay(el, logoPath, imdbUrl, titleText, synopsis, rating) {
     if (next === 'vidking' || next === 'vidsrc' || next === 'autoembed') {
       currentStreamSource = next;
       updateStreamSelection();
+      Array.from(sourceMenu.querySelectorAll('.overlay-source-option')).forEach(function (btn) {
+        btn.classList.toggle('active', btn.dataset.value === currentStreamSource);
+      });
     }
   };
+
+  sourceSelect.onclick = function (ev) {
+    ev.preventDefault();
+    sourceMenu.classList.toggle('open');
+  };
+
+  sourceSelect.onkeydown = function (ev) {
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault();
+      sourceMenu.classList.toggle('open');
+    }
+    if (ev.key === 'Escape') {
+      sourceMenu.classList.remove('open');
+    }
+  };
+
+  document.addEventListener('click', function (ev) {
+    if (!sourceMenu.contains(ev.target) && ev.target !== sourceSelect) {
+      sourceMenu.classList.remove('open');
+    }
+  });
+
+  Array.from(sourceMenu.querySelectorAll('.overlay-source-option')).forEach(function (btn) {
+    btn.classList.toggle('active', btn.dataset.value === currentStreamSource);
+  });
 
   const imdbBtn = document.createElement('a');
   imdbBtn.className = 'overlay-btn secondary';
@@ -769,6 +811,7 @@ function attachOverlay(el, logoPath, imdbUrl, titleText, synopsis, rating) {
 
   actions.appendChild(streamBtn);
   actions.appendChild(sourceSelect);
+  actions.appendChild(sourceMenu);
   actions.appendChild(imdbBtn);
   actions.appendChild(starBtn);
   panel.appendChild(actions);
