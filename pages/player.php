@@ -3,6 +3,7 @@ $postedUrl = isset($_POST['stream_url']) ? trim((string) $_POST['stream_url']) :
 $embedUrl = '';
 $embedHost = '';
 $iframeSandbox = '';
+$iframeReferrerPolicy = 'no-referrer';
 $allowedHosts = [
     'www.vidking.net',
     'vidking.net',
@@ -25,6 +26,7 @@ if ($postedUrl !== '') {
 }
 if ($embedHost === 'vidsrc.to' || $embedHost === 'www.vidsrc.to' || $embedHost === 'vidsrc.icu' || $embedHost === 'www.vidsrc.icu') {
     $iframeSandbox = 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation';
+    $iframeReferrerPolicy = 'origin';
 }
 if ($embedHost === 'www.vidking.net' || $embedHost === 'vidking.net' || $embedHost === 'player.autoembed.cc' || $embedHost === 'autoembed.cc' || $embedHost === 'www.autoembed.cc') {
     $iframeSandbox = '';
@@ -108,7 +110,7 @@ if ($embedHost === 'www.vidking.net' || $embedHost === 'vidking.net' || $embedHo
       <iframe
         id="player-frame"
         src="<?php echo htmlspecialchars($embedUrl, ENT_QUOTES, 'UTF-8'); ?>"
-        referrerpolicy="no-referrer"
+        referrerpolicy="<?php echo htmlspecialchars($iframeReferrerPolicy, ENT_QUOTES, 'UTF-8'); ?>"
         <?php if ($iframeSandbox !== ''): ?>sandbox="<?php echo htmlspecialchars($iframeSandbox, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
         allow="autoplay; fullscreen; picture-in-picture"
       ></iframe>
