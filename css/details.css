@@ -342,17 +342,19 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      height: 20px;
-      border-radius: 999px;
-      padding: 0 8px;
-      font-size: 10px;
-      font-weight: 700;
+      height: 16px;
+      border-radius: 3px;
+      padding: 0 6px;
+      font-size: 9px;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
-      color: #fef3c7;
-      background: rgba(146, 64, 14, 0.55);
-      border: 1px solid rgba(251, 191, 36, 0.45);
+      letter-spacing: 0.2px;
+      color: #ffffff;
+      background: #dc2626;
+      transform: rotate(-14deg);
+      transform-origin: center;
       flex: 0 0 auto;
+      line-height: 1;
     }
 
     .overlay-source-option:focus {

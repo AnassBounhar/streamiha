@@ -748,7 +748,7 @@ function attachOverlay(el, logoPath, imdbUrl, titleText, synopsis, rating) {
       menuBtn.disabled = true;
       const badge = document.createElement('span');
       badge.className = 'overlay-source-soon';
-      badge.textContent = 'Coming soon';
+      badge.textContent = 'Soon';
       menuBtn.appendChild(badge);
     }
     menuBtn.onclick = function () {
