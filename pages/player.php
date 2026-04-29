@@ -27,8 +27,8 @@ if ($postedUrl !== '') {
 }
 if ($embedHost === 'vidsrc.to' || $embedHost === 'www.vidsrc.to' || $embedHost === 'vidsrc.icu' || $embedHost === 'www.vidsrc.icu') {
     $embedProvider = 'vidsrc';
-    $iframeSandbox = 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation';
-    $iframeReferrerPolicy = 'origin';
+    $iframeSandbox = '';
+    $iframeReferrerPolicy = '';
 }
 if ($embedHost === 'www.vidking.net' || $embedHost === 'vidking.net') {
     $embedProvider = 'vidking';
@@ -120,7 +120,7 @@ if ($embedHost === 'player.autoembed.cc' || $embedHost === 'autoembed.cc' || $em
         id="player-frame"
         src="<?php echo htmlspecialchars($embedUrl, ENT_QUOTES, 'UTF-8'); ?>"
         data-provider="<?php echo htmlspecialchars($embedProvider, ENT_QUOTES, 'UTF-8'); ?>"
-        referrerpolicy="<?php echo htmlspecialchars($iframeReferrerPolicy, ENT_QUOTES, 'UTF-8'); ?>"
+        <?php if ($iframeReferrerPolicy !== ''): ?>referrerpolicy="<?php echo htmlspecialchars($iframeReferrerPolicy, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
         <?php if ($iframeSandbox !== ''): ?>sandbox="<?php echo htmlspecialchars($iframeSandbox, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
         allow="autoplay; fullscreen; picture-in-picture"
       ></iframe>
