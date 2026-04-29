@@ -229,7 +229,6 @@ let streamGuardOpenPatched = false;
 let streamGuardEnabled = false;
 let originalWindowOpen = null;
 let currentStreamSource = 'vidking';
-let currentImdbId = '';
 const STREAM_SOURCE_OPTIONS = [
   { value: 'vidking', label: 'Vidking' },
   { value: 'vidsrc', label: 'VidSrc' },
@@ -348,19 +347,17 @@ function submitPlayerPost(url) {
   form.submit();
 }
 
-function buildStreamEmbedUrl(source, type, id, season, episode, imdbId) {
+function buildStreamEmbedUrl(source, type, id, season, episode) {
   const safeType = type === 'tv' ? 'tv' : 'movie';
-  const imdbText = String(imdbId || '').trim();
-  const streamId = source === 'vidsrc' && /^tt\d+$/i.test(imdbText) ? imdbText : id;
-  const safeId = encodeURIComponent(streamId);
+  const safeId = encodeURIComponent(id);
   const safeSeason = encodeURIComponent(season || 1);
   const safeEpisode = encodeURIComponent(episode || 1);
 
   if (source === 'vidsrc') {
     if (safeType === 'tv') {
-      return 'https://vidsrc.to/embed/tv/' + safeId + '/' + safeSeason + '/' + safeEpisode;
+      return 'https://vidsrc.to/embed/tv?tmdb=' + safeId + '&season=' + safeSeason + '&episode=' + safeEpisode;
     }
-    return 'https://vidsrc.to/embed/movie/' + safeId;
+    return 'https://vidsrc.to/embed/movie?tmdb=' + safeId;
   }
 
   if (source === 'autoembed') {
@@ -385,7 +382,7 @@ function buildStreamEmbedUrl(source, type, id, season, episode, imdbId) {
 }
 
 function currentStreamEmbedUrl() {
-  return buildStreamEmbedUrl(currentStreamSource, currentType, currentId, currentSeason, currentEpisode, currentImdbId);
+  return buildStreamEmbedUrl(currentStreamSource, currentType, currentId, currentSeason, currentEpisode);
 }
 
 function attachVidkingLoader(el, beforeNode) {
@@ -927,7 +924,6 @@ async function renderTrailer(key, titleText, logoPath, imdbUrl, synopsis, rating
   currentTrailerKey = key || '';
   currentBackdropPath = details && (details.backdrop_path || details.poster_path) ? (details.backdrop_path || details.poster_path) : '';
   currentStreamSource = 'vidking';
-  currentImdbId = details && details.imdb_id ? String(details.imdb_id) : '';
   activePlayback = 'trailer';
 
   if (currentTrailerKey && window.location.protocol !== 'file:') {
@@ -961,19 +957,17 @@ async function load() {
 
   try {
     const details = await fetchJson('/' + type + '/' + id, { language: 'en-US' });
-    const [creditsResult, videosResult, imagesResult, recommendationsResult, externalIdsResult] = await Promise.allSettled([
+    const [creditsResult, videosResult, imagesResult, recommendationsResult] = await Promise.allSettled([
       fetchJson('/' + type + '/' + id + '/credits', { language: 'en-US' }),
       fetchJson('/' + type + '/' + id + '/videos', { language: 'en-US' }),
       fetchJson('/' + type + '/' + id + '/images', { include_image_language: 'en,null' }),
-      fetchJson('/' + type + '/' + id + '/recommendations', { language: 'en-US', page: 1 }),
-      fetchJson('/' + type + '/' + id + '/external_ids', { language: 'en-US' })
+      fetchJson('/' + type + '/' + id + '/recommendations', { language: 'en-US', page: 1 })
     ]);
 
     const credits = creditsResult.status === 'fulfilled' ? creditsResult.value : { cast: [], crew: [] };
     const videos = videosResult.status === 'fulfilled' ? videosResult.value : { results: [] };
     const images = imagesResult.status === 'fulfilled' ? imagesResult.value : { logos: [] };
     const recommendations = recommendationsResult.status === 'fulfilled' ? recommendationsResult.value : { results: [] };
-    const externalIds = externalIdsResult.status === 'fulfilled' ? externalIdsResult.value : {};
 
     const logoPath = (images.logos || []).find((x) => x.iso_639_1 === 'en' && x.file_path)?.file_path ||
       (images.logos || []).find((x) => x.file_path)?.file_path ||
@@ -988,8 +982,7 @@ async function load() {
     }
     const synopsis = details.overview || 'No synopsis available.';
     const rating = typeof details.vote_average === 'number' ? details.vote_average.toFixed(1) + '/10' : 'N/A';
-    const imdbId = details.imdb_id || details.external_ids?.imdb_id || externalIds.imdb_id || '';
-    currentImdbId = imdbId || '';
+    const imdbId = details.imdb_id || details.external_ids?.imdb_id || '';
     const imdbUrl = imdbId ? 'https://www.imdb.com/title/' + imdbId + '/' : 'https://www.imdb.com/find/?q=' + encodeURIComponent(titleText);
     currentContinuePayload = {
       id: details.id,
