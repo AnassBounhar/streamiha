@@ -6,6 +6,7 @@ $allowedHosts = [
     'vidking.net',
     'vidsrc.icu',
     'www.vidsrc.icu',
+    'player.autoembed.cc',
     'autoembed.cc',
     'www.autoembed.cc'
 ];
