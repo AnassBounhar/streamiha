@@ -7,6 +7,7 @@
   let popupNotice = null;
   let popupNoticeTimer = null;
   let frameIntentAt = 0;
+  const provider = frame && frame.dataset ? String(frame.dataset.provider || '') : '';
 
   function showBackButton() {
     if (!backBtn) {
@@ -157,8 +158,25 @@
 
   if (typeof window.analyticsTrack === 'function') {
     window.analyticsTrack('player_view', {
-      page: window.location.pathname
+      page: window.location.pathname,
+      provider: provider || 'unknown'
     });
+  }
+
+  if (provider === 'vidsrc') {
+    if (backBtn) {
+      backBtn.addEventListener('mouseenter', function () {
+        showBackButton();
+      });
+    }
+    document.addEventListener('mousemove', restartBackButtonTimer, { passive: true });
+    document.addEventListener('touchstart', restartBackButtonTimer, { passive: true });
+    document.addEventListener('keydown', restartBackButtonTimer);
+    restartBackButtonTimer();
+    frame.addEventListener('load', function () {
+      restartBackButtonTimer();
+    });
+    return;
   }
 
   blockPopupsAndEscapes();
